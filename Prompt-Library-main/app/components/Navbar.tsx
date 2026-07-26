@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client'
 import SearchBar from '@/app/components/SearchBar'
 import Icon from '@/app/components/Icon'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import { PROFILE_UPDATED } from '@/app/components/ProfileEditor'
+import { getLocalAvatar } from '@/lib/localAvatar'
 
 const primaryItems = [
   { label: 'หมวดหมู่', href: '/home' },
@@ -27,16 +29,40 @@ export default function Navbar() {
   const supabase = createClient()
 
   const [email, setEmail] = useState<string | null>(null)
+  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [userOpen, setUserOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
+  const userRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then((res: { data: { user: { email?: string } | null } }) => {
+    async function loadProfile(userId: string) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', userId)
+        .maybeSingle()
+      // รูปในฐานข้อมูลมาก่อน ถ้าไม่มีค่อยใช้รูปสำรองที่เก็บไว้ในเครื่อง
+      setProfile({
+        display_name: data?.display_name ?? null,
+        avatar_url: data?.avatar_url ?? getLocalAvatar(userId),
+      })
+    }
+
+    supabase.auth.getUser().then((res: { data: { user: { id: string; email?: string } | null } }) => {
       const user = res.data.user
       setEmail(user?.email ?? null)
+      if (user) loadProfile(user.id)
       setLoadingUser(false)
     })
+
+    // หน้าโปรไฟล์บันทึกเสร็จแล้วยิง event มา ให้ดึงรูป/ชื่อใหม่ทันที
+    async function onProfileUpdated() {
+      const { data } = await supabase.auth.getUser()
+      if (data.user) loadProfile(data.user.id)
+    }
+    window.addEventListener(PROFILE_UPDATED, onProfileUpdated)
 
     const {
       data: { subscription },
@@ -45,21 +71,32 @@ export default function Navbar() {
       session: Session | null
     ) => {
       setEmail(session?.user?.email ?? null)
+      if (session?.user) loadProfile(session.user.id)
+      else setProfile(null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener(PROFILE_UPDATED, onProfileUpdated)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false)
-      }
+      const target = e.target as Node
+      if (moreRef.current && !moreRef.current.contains(target)) setMoreOpen(false)
+      if (userRef.current && !userRef.current.contains(target)) setUserOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // เปลี่ยนหน้าแล้วต้องปิดเมนู ไม่งั้นมันค้างเปิดคาไว้บนหน้าใหม่
+  useEffect(() => {
+    setUserOpen(false)
+    setMoreOpen(false)
+  }, [pathname])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -172,22 +209,58 @@ export default function Navbar() {
           {!loadingUser && (
             <>
               {email ? (
-                <>
-                <Link
-                  href="/profile"
-                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-surface text-ink-soft border border-line hover:border-accent/50 hover:text-accent transition-all"
-                  title={email}
-                >
-                  Profile
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-surface text-ink-soft border border-line hover:border-accent2/50 hover:text-accent2 transition-all"
-                  title={email}
-                >
-                  ออกจากระบบ
-                </button>
-                </>
+                <div className="relative" ref={userRef}>
+                  {/* รูปโปรไฟล์วงกลม กดแล้วกางเมนู */}
+                  <button
+                    onClick={() => setUserOpen((v) => !v)}
+                    aria-haspopup="menu"
+                    aria-expanded={userOpen}
+                    aria-label="เมนูบัญชีผู้ใช้"
+                    title={email}
+                    className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border transition-all ${
+                      userOpen
+                        ? 'border-accent shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_15%,transparent)]'
+                        : 'border-line hover:border-accent/60'
+                    }`}
+                  >
+                    {profile?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="grid h-full w-full place-items-center bg-accent/10 font-display text-sm font-extrabold text-accent">
+                        {(profile?.display_name || email).trim().charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </button>
+
+                  {userOpen && (
+                    <div className="animate-menu-in absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]">
+                      <div className="px-3 py-2.5 border-b border-line mb-1">
+                        <p className="truncate text-sm font-semibold text-ink">
+                          {profile?.display_name || 'ยังไม่ได้ตั้งชื่อเล่น'}
+                        </p>
+                        <p className="truncate text-xs font-mono text-faint mt-0.5">{email}</p>
+                      </div>
+
+                      <Link
+                        href="/profile"
+                        onClick={() => setUserOpen(false)}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-mono text-ink-soft transition-colors hover:bg-accent/10 hover:text-accent"
+                      >
+                        <Icon name="user" size={15} />
+                        โปรไฟล์ของฉัน
+                      </Link>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-mono text-ink-soft transition-colors hover:bg-accent2/10 hover:text-accent2"
+                      >
+                        <Icon name="log-out" size={15} />
+                        ออกจากระบบ
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   href="/login"

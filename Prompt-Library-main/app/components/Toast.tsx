@@ -13,7 +13,8 @@ export function showToast(message: string, tone: ToastItem['tone'] = 'ok') {
   listeners.forEach((listener) => listener(toast))
 }
 
-const VISIBLE_MS = 2400
+// ข้อความ error มักยาวและต้องอ่านทัน จึงค้างนานกว่าข้อความสำเร็จ
+const VISIBLE_MS = { ok: 2400, error: 8000 }
 
 export default function Toaster() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
@@ -23,7 +24,7 @@ export default function Toaster() {
       setToasts((prev) => [...prev, toast])
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== toast.id))
-      }, VISIBLE_MS)
+      }, VISIBLE_MS[toast.tone])
     }
 
     listeners.add(handle)
@@ -40,22 +41,22 @@ export default function Toaster() {
         <div
           key={toast.id}
           role="status"
-          className={`animate-toast-in flex items-center gap-2.5 rounded-xl border px-4 py-3 font-mono text-sm backdrop-blur ${
+          className={`animate-toast-in flex max-w-[90vw] items-start gap-2.5 rounded-xl border px-4 py-3 text-left font-mono text-sm backdrop-blur sm:max-w-xl ${
             toast.tone === 'ok'
               ? 'border-accent/60 bg-surface/95 text-accent-soft shadow-[0_12px_40px_-10px_rgba(0,229,255,0.55)]'
               : 'border-accent2/60 bg-surface/95 text-accent2 shadow-[0_12px_40px_-10px_rgba(255,62,200,0.5)]'
           }`}
         >
           {toast.tone === 'ok' ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 shrink-0">
               <path d="M20 6 9 17l-5-5" />
             </svg>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 shrink-0">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           )}
-          {toast.message}
+          <span className="min-w-0 break-words">{toast.message}</span>
         </div>
       ))}
     </div>
