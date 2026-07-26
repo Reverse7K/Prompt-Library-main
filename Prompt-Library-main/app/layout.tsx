@@ -25,10 +25,25 @@ export const metadata: Metadata = {
   description: 'รวม Prompt AI สำหรับสร้างรูปภาพ วิดีโอ งานนำเสนอ และอื่นๆ',
 }
 
+/*
+  ค่าเริ่มต้นคือธีมสว่าง ถ้าเคยเลือกไว้ก็ใช้ค่าที่จำใน localStorage
+  ต้องเป็น inline script ใน head เท่านั้น เพราะ React hydrate หลังเบราว์เซอร์วาดเฟรมแรกไปแล้ว
+  ถ้าไปตั้งใน component คนที่เลือกธีมมืดไว้จะเห็นจอขาวแวบหนึ่งทุกครั้งที่โหลด
+*/
+const themeScript = `(function(){try{var t=localStorage.getItem('prompt-library-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:'light'}catch(e){document.documentElement.dataset.theme='light'}})()`
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th" className={`${prompt.variable} ${jetbrains.variable}`}>
-      <body className="bg-[#0a0a0f] text-[#f2f2f7] font-sans min-h-screen antialiased">
+    <html
+      lang="th"
+      data-theme="light"
+      suppressHydrationWarning
+      className={`${prompt.variable} ${jetbrains.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="bg-base text-ink font-sans min-h-screen antialiased">
         <Navbar />
         {children}
         <Toaster />

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SearchBar from '@/app/components/SearchBar'
 import Icon from '@/app/components/Icon'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 const primaryItems = [
   { label: 'หมวดหมู่', href: '/home' },
@@ -79,8 +80,8 @@ export default function Navbar() {
   const linkClass = (active: boolean) =>
     `px-3.5 py-2 rounded-lg text-sm font-mono whitespace-nowrap transition-all ${
       active
-        ? 'text-cyan-300 bg-cyan-500/10 shadow-[0_0_12px_rgba(0,229,255,0.25)]'
-        : 'text-[#8888a0] hover:text-cyan-300 hover:bg-cyan-500/5'
+        ? 'text-accent bg-accent/10 shadow-[0_0_12px_rgba(0,229,255,0.25)]'
+        : 'text-muted hover:text-accent hover:bg-accent/5'
     }`
 
   const navIcon = (href: string) => {
@@ -93,11 +94,11 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur border-b border-[#232336]">
+    <header className="sticky top-0 z-50 bg-base/90 backdrop-blur border-b border-line">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-4">
         <Link
           href="/"
-          className="text-base sm:text-lg font-bold bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text text-transparent shrink-0"
+          className="text-base sm:text-lg font-bold bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent shrink-0"
         >
           Prompt Library
         </Link>
@@ -131,7 +132,7 @@ export default function Navbar() {
             </button>
 
             {moreOpen && (
-              <div className="absolute top-full left-0 mt-2 w-44 rounded-lg bg-[#12121c] border border-[#232336] shadow-[0_0_24px_rgba(0,0,0,0.5)] overflow-hidden py-1">
+              <div className="absolute top-full left-0 mt-2 w-44 rounded-lg bg-surface border border-line shadow-[0_0_24px_rgba(0,0,0,0.5)] overflow-hidden py-1">
                 {moreItems.map((item) => (
                   <Link
                     key={item.href}
@@ -139,8 +140,8 @@ export default function Navbar() {
                     onClick={() => setMoreOpen(false)}
                     className={`block px-4 py-2.5 text-sm font-mono transition-colors ${
                       isActive(item.href)
-                        ? 'text-cyan-300 bg-cyan-500/10'
-                        : 'text-[#c8c8d4] hover:text-cyan-300 hover:bg-cyan-500/5'
+                        ? 'text-accent bg-accent/10'
+                        : 'text-ink-soft hover:text-accent hover:bg-accent/5'
                     }`}
                   >
                     <span className="flex items-center gap-2">{navIcon(item.href)}{item.label}</span>
@@ -158,10 +159,12 @@ export default function Navbar() {
 
         {/* ฝั่งขวา: เพิ่ม prompt + auth */}
         <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+          <ThemeToggle />
+
           <Link
             href={email ? '/prompts/new' : '/login?next=/prompts/new'}
             onClick={handleAddPromptClick}
-            className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-400/50 hover:bg-fuchsia-500/20 hover:shadow-[0_0_12px_rgba(255,62,200,0.3)] transition-all"
+            className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-accent2/10 text-accent2 border border-accent2/50 hover:bg-accent2/20 hover:shadow-[0_0_12px_rgba(255,62,200,0.3)] transition-all"
           >
             + เพิ่ม Prompt
           </Link>
@@ -172,14 +175,14 @@ export default function Navbar() {
                 <>
                 <Link
                   href="/profile"
-                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-surface text-ink-soft border border-line hover:border-accent/50 hover:text-accent transition-all"
                   title={email}
                 >
                   Profile
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-fuchsia-400/50 hover:text-fuchsia-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-surface text-ink-soft border border-line hover:border-accent2/50 hover:text-accent2 transition-all"
                   title={email}
                 >
                   ออกจากระบบ
@@ -188,7 +191,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-surface text-ink-soft border border-line hover:border-accent/50 hover:text-accent transition-all"
                 >
                   เข้าสู่ระบบ
                 </Link>
@@ -199,7 +202,7 @@ export default function Navbar() {
       </div>
 
       {/* เมนูมือถือ: แถวที่ 2 แบบเลื่อนได้ เฉพาะจอเล็กกว่า lg */}
-      <div className="lg:hidden border-t border-[#232336] px-6 py-2 flex gap-1 overflow-x-auto">
+      <div className="lg:hidden border-t border-line px-6 py-2 flex gap-1 overflow-x-auto">
         {[...primaryItems, ...moreItems].map((item) => (
           <Link key={item.href} href={item.href} className={linkClass(isActive(item.href))}>
             <span className="flex items-center gap-1.5">{navIcon(item.href)}{item.label}</span>

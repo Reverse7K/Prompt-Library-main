@@ -42,8 +42,8 @@ export default function Toaster() {
           role="status"
           className={`animate-toast-in flex items-center gap-2.5 rounded-xl border px-4 py-3 font-mono text-sm backdrop-blur ${
             toast.tone === 'ok'
-              ? 'border-cyan-400/60 bg-[#0b1520]/95 text-cyan-200 shadow-[0_12px_40px_-10px_rgba(0,229,255,0.55)]'
-              : 'border-fuchsia-400/60 bg-[#1a0b16]/95 text-fuchsia-200 shadow-[0_12px_40px_-10px_rgba(255,62,200,0.5)]'
+              ? 'border-accent/60 bg-surface/95 text-accent-soft shadow-[0_12px_40px_-10px_rgba(0,229,255,0.55)]'
+              : 'border-accent2/60 bg-surface/95 text-accent2 shadow-[0_12px_40px_-10px_rgba(255,62,200,0.5)]'
           }`}
         >
           {toast.tone === 'ok' ? (

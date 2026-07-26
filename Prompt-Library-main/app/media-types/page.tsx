@@ -22,22 +22,22 @@ export default async function MediaTypesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="section-title text-4xl font-extrabold mb-1 text-[#f2f2f7]">
+      <h1 className="section-title text-4xl font-extrabold mb-1 text-ink">
         ประเภทสื่อ
       </h1>
-      <p className="text-[#8888a0] text-sm mb-8">เลือกดู Prompt ตามรูปแบบผลลัพธ์ที่ต้องการ</p>
+      <p className="text-muted text-sm mb-8">เลือกดู Prompt ตามรูปแบบผลลัพธ์ที่ต้องการ</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {mediaTypes?.map((mt) => (
           <Link
             key={mt.media_type_id}
             href={`/media-types/${mt.slug}`}
-            className="group p-6 rounded-xl bg-[#12121c] border border-[#232336] hover:border-cyan-400/60 hover:shadow-[0_0_24px_rgba(0,229,255,0.2)] transition-all"
+            className="group p-6 rounded-xl bg-surface border border-line hover:border-accent/60 hover:shadow-[0_0_24px_rgba(0,229,255,0.2)] transition-all"
           >
-            <h3 className="font-semibold text-lg text-[#f2f2f7] group-hover:text-cyan-300 transition-colors">
+            <h3 className="font-semibold text-lg text-ink group-hover:text-accent transition-colors">
               {mt.name}
             </h3>
-            <p className="text-[#666680] text-sm font-mono mt-1">
+            <p className="text-faint text-sm font-mono mt-1">
               {countMap[mt.media_type_id] ?? 0} prompts
             </p>
           </Link>

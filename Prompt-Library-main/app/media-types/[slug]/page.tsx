@@ -28,20 +28,20 @@ export default async function MediaTypeDetailPage({
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <Link href="/media-types" className="text-sm text-cyan-400 hover:underline font-mono">
+      <Link href="/media-types" className="text-sm text-accent hover:underline font-mono">
         ← กลับไปประเภทสื่อ
       </Link>
 
       <h1
-        className="text-3xl font-bold mt-4 mb-8 text-[#f2f2f7]"
+        className="section-title text-4xl font-extrabold mt-4 mb-8"
       >
         {mediaType.name}
       </h1>
 
-      {error && <p className="text-fuchsia-400">เกิดข้อผิดพลาด: {error.message}</p>}
+      {error && <p className="text-accent2">เกิดข้อผิดพลาด: {error.message}</p>}
 
       {prompts && prompts.length === 0 && (
-        <p className="text-[#8888a0] font-mono text-sm py-12 text-center">
+        <p className="text-muted font-mono text-sm py-12 text-center">
           {'>'} ยังไม่มี Prompt ในประเภทสื่อนี้
         </p>
       )}

@@ -154,7 +154,7 @@ export default function PromptInfiniteGrid({
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden bg-[#12121c] border border-[#232336] animate-pulse aspect-[4/5]"
+            className="rounded-xl overflow-hidden bg-surface border border-line animate-pulse aspect-[4/5]"
           />
         ))}
       </div>
@@ -165,7 +165,7 @@ export default function PromptInfiniteGrid({
     <>
       {prompts.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-[#8888a0] font-mono text-sm">
+          <p className="text-muted font-mono text-sm">
             {'>'} ไม่พบ Prompt ที่ตรงกับตัวกรองนี้
           </p>
         </div>
@@ -181,16 +181,16 @@ export default function PromptInfiniteGrid({
       <div ref={sentinelRef} className="h-1" />
 
       {loading && !initializing && (
-        <div className="flex items-center justify-center gap-2 py-8 text-cyan-400/80 font-mono text-sm">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse [animation-delay:150ms]" />
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse [animation-delay:300ms]" />
+        <div className="flex items-center justify-center gap-2 py-8 text-accent/80 font-mono text-sm">
+          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-accent animate-pulse [animation-delay:150ms]" />
+          <span className="w-2 h-2 rounded-full bg-accent animate-pulse [animation-delay:300ms]" />
           <span className="ml-2">กำลังโหลดเพิ่ม...</span>
         </div>
       )}
 
       {!hasMore && prompts.length > 0 && (
-        <p className="text-center py-8 text-[#666680] font-mono text-xs">
+        <p className="text-center py-8 text-faint font-mono text-xs">
           {'>'} สิ้นสุดรายการแล้ว ({prompts.length} รายการ)
         </p>
       )}

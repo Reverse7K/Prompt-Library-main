@@ -57,29 +57,34 @@ export default async function BrowsePromptsPage({
   const filterKey = `${categoryId ?? 'all'}-${mediaTypeId ?? 'all'}-${aiModelId ?? 'all'}`
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] relative overflow-hidden">
+    <div className="min-h-screen bg-base relative overflow-hidden">
       <div
-        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
+          opacity: 'var(--grid-opacity)',
           backgroundImage:
-            'linear-gradient(#00e5ff 1px, transparent 1px), linear-gradient(90deg, #00e5ff 1px, transparent 1px)',
+            'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }}
       />
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute -top-20 right-0 w-96 h-96 bg-fuchsia-500/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent/20 rounded-full blur-[120px] pointer-events-none glow-blob" />
+      <div className="absolute -top-20 right-0 w-96 h-96 bg-accent2/20 rounded-full blur-[120px] pointer-events-none glow-blob" />
 
       <div className="relative max-w-6xl mx-auto px-6 py-12">
         <div className="animate-spring-up mb-10">
-          <h1 className="section-title text-4xl font-extrabold mb-2 bg-gradient-to-r from-cyan-300 via-cyan-200 to-fuchsia-400 bg-clip-text text-transparent">
+          <h1 className="section-title text-4xl font-extrabold mb-2 bg-gradient-to-r from-accent via-accent-soft to-accent2 bg-clip-text text-transparent">
             เลือกดู Prompt
           </h1>
-          <p className="text-[#8888a0] text-sm">
+          <p className="text-muted text-sm">
             รวม Prompt AI สำหรับสร้างรูปภาพ วิดีโอ และงานนำเสนอ
           </p>
         </div>
 
-        <div className="animate-spring-up [animation-delay:60ms]">
+        {/*
+          ต้อง relative z-30 ที่ชั้นนี้ ไม่ใช่ที่ตัว dropdown เพราะ animate-spring-up ใช้ transform
+          ซึ่งสร้าง stacking context ใหม่ z-index ของลูกจึงไปสู้กับกริดการ์ดข้างนอกไม่ได้
+        */}
+        <div className="animate-spring-up [animation-delay:60ms] relative z-30">
           <PromptFilters
             categories={(categories ?? []).map((c) => ({ id: c.category_id, name: c.name, slug: c.slug }))}
             mediaTypes={(mediaTypes ?? []).map((m) => ({ id: m.media_type_id, name: m.name, slug: m.slug }))}
@@ -88,7 +93,7 @@ export default async function BrowsePromptsPage({
         </div>
 
         {error && (
-          <p className="text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-lg px-4 py-3 mt-4">
+          <p className="text-accent2 bg-accent2/10 border border-accent2/30 rounded-lg px-4 py-3 mt-4">
             เกิดข้อผิดพลาด: {error.message}
           </p>
         )}

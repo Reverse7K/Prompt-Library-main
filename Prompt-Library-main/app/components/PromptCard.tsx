@@ -55,16 +55,16 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
     >
       <Link
         href={`/prompts/${prompt.prompt_id}`}
-        className="group relative flex h-full flex-col rounded-xl overflow-hidden bg-[#12121c] border border-[#232336] hover:z-10 transition-[translate,scale,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-cyan-400/70 hover:shadow-[0_18px_50px_-12px_rgba(0,229,255,0.45)] hover:-translate-y-2 hover:scale-[1.02]"
+        className="group relative flex h-full flex-col rounded-xl overflow-hidden bg-surface border border-line hover:z-10 transition-[translate,scale,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent/70 hover:shadow-[0_18px_50px_-12px_rgba(0,229,255,0.45)] hover:-translate-y-2 hover:scale-[1.02]"
       >
       {/* มุมเรืองแสงแบบ HUD reticle โผล่ตอน hover */}
-      <span className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
-      <span className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
-      <span className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
-      <span className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      <span className="pointer-events-none absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-accent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      <span className="pointer-events-none absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-accent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      <span className="pointer-events-none absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-accent2 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      <span className="pointer-events-none absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-accent2 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
 
       {/* ภาพตัวอย่าง */}
-      <div className="aspect-video shrink-0 bg-[#0a0a0f] overflow-hidden relative">
+      <div className="aspect-video shrink-0 bg-base overflow-hidden relative">
         {prompt.cover_image_url ? (
           // ชื่อเดียวกับรูปใหญ่ในหน้ารายละเอียด เบราว์เซอร์จะมอร์ฟรูปนี้ไปเป็นรูปนั้นตอนกด
           <ViewTransition name={`prompt-cover-${prompt.prompt_id}`}>
@@ -75,7 +75,7 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
             />
           </ViewTransition>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[#8888a0] text-sm font-mono">
+          <div className="w-full h-full flex items-center justify-center text-muted text-sm font-mono">
             no_preview.img
           </div>
         )}
@@ -89,7 +89,7 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
           className={`absolute top-3 right-3 w-9 h-9 rounded-lg flex items-center justify-center backdrop-blur-md border transition-all opacity-0 group-hover:opacity-100 ${
             copied
               ? 'bg-emerald-500/90 border-emerald-400 text-white'
-              : 'bg-[#0a0a0f]/80 border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400'
+              : 'bg-base/80 border-accent/40 text-accent hover:bg-accent/20 hover:border-accent'
           }`}
           title="คัดลอก Prompt"
         >
@@ -105,34 +105,34 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
           )}
         </button>
 
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-cyan-400/60 via-fuchsia-400/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-accent/60 via-accent2/60 to-transparent" />
       </div>
 
       {/* เนื้อหา */}
       <div className="flex flex-1 flex-col p-4">
         <div className="flex gap-2 mb-2.5">
           {prompt.categories && (
-            <span className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-cyan-400" />
+            <span className="text-xs font-mono bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-accent" />
               {prompt.categories.name}
             </span>
           )}
           {prompt.media_types && (
-            <span className="text-xs font-mono bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-fuchsia-400" />
+            <span className="text-xs font-mono bg-accent2/10 text-accent2 border border-accent2/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-accent2" />
               {prompt.media_types.name}
             </span>
           )}
         </div>
 
-        <h3 className="font-semibold text-[#f2f2f7] line-clamp-1 group-hover:text-cyan-300 transition-colors">
+        <h3 className="font-semibold text-ink line-clamp-1 group-hover:text-accent transition-colors">
           {prompt.title}
         </h3>
-        <p className="text-sm text-[#8888a0] line-clamp-2 mt-1">{prompt.prompt_text}</p>
+        <p className="text-sm text-muted line-clamp-2 mt-1">{prompt.prompt_text}</p>
 
         {/* แถวล่าง: สถิติ + ปุ่มดูรายละเอียด — ดันไปชิดล่างเสมอ การ์ดในแถวเดียวกันจะได้ตรงกัน */}
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-[#232336]">
-          <div className="flex items-center gap-3 text-xs text-[#666680] font-mono">
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-line">
+          <div className="flex items-center gap-3 text-xs text-faint font-mono">
             <span className="flex items-center gap-1"><Icon name="eye" size={14} />{prompt.view_count}</span>
             {typeof prompt.copy_count === 'number' && <span className="flex items-center gap-1"><Icon name="copy" size={14} />{prompt.copy_count}</span>}
             <LikeButton
@@ -143,7 +143,7 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
             />
           </div>
 
-          <span className="text-xs font-mono text-cyan-400/80 group-hover:text-cyan-300 flex items-center gap-1 transition-colors">
+          <span className="text-xs font-mono text-accent/80 group-hover:text-accent flex items-center gap-1 transition-colors">
             ดูรายละเอียด
             <svg
               width="12"
