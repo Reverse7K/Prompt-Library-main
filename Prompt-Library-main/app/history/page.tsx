@@ -19,9 +19,9 @@ export default async function HistoryPage() {
   if (!user) {
     return (
       <div className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-4 uppercase">
-          // usage_history
-        </p>
+        <h1 className="section-title section-title-center text-3xl font-extrabold text-[#f2f2f7] mb-4">
+          ประวัติการใช้งาน
+        </h1>
         <p className="text-[#8888a0] font-mono text-sm">
           {'>'} กรุณาเข้าสู่ระบบเพื่อดูประวัติการใช้งานของคุณ
         </p>
@@ -38,12 +38,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">
-        // usage_history
-      </p>
-      <h1
-        className="text-3xl font-bold mb-1 text-[#f2f2f7]"
-      >
+      <h1 className="section-title text-4xl font-extrabold mb-1 text-[#f2f2f7]">
         ประวัติการใช้งาน
       </h1>
       <p className="text-[#8888a0] text-sm mb-8">50 รายการล่าสุด</p>

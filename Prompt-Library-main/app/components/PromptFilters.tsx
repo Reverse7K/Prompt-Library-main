@@ -27,11 +27,11 @@ export default function PromptFilters({ categories, mediaTypes, aiModels }: Prom
     } else {
       params.delete(key)
     }
-    router.push(`/?${params.toString()}`)
+    router.push(`/home?${params.toString()}`)
   }
 
   function clearAll() {
-    router.push('/')
+    router.push('/home')
   }
 
   const selectClass =

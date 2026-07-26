@@ -172,8 +172,9 @@ export default function PromptInfiniteGrid({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {prompts.map((prompt) => (
-          <PromptCard key={prompt.prompt_id} prompt={prompt} />
+        {/* +2 คือให้การ์ดเริ่มไล่หลังหัวข้อกับตัวกรองของหน้า, %PAGE_SIZE คือรีเซ็ตจังหวะทุกหน้าที่โหลดเพิ่ม */}
+        {prompts.map((prompt, i) => (
+          <PromptCard key={prompt.prompt_id} prompt={prompt} index={(i % PAGE_SIZE) + 2} />
         ))}
       </div>
 

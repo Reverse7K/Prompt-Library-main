@@ -74,12 +74,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">
-          // signup
-        </p>
-        <h1
-          className="text-2xl font-bold text-[#f2f2f7] mb-6"
-        >
+        <h1 className="section-title text-2xl font-extrabold text-[#f2f2f7] mb-6">
           สมัครสมาชิก
         </h1>
 

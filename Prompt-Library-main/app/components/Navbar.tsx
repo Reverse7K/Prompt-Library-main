@@ -9,7 +9,7 @@ import SearchBar from '@/app/components/SearchBar'
 import Icon from '@/app/components/Icon'
 
 const primaryItems = [
-  { label: 'หมวดหมู่', href: '/' },
+  { label: 'หมวดหมู่', href: '/home' },
   { label: 'ยอดนิยม', href: '/popular' },
   { label: 'รายการโปรด', href: '/favorites' },
 ]
@@ -84,7 +84,7 @@ export default function Navbar() {
     }`
 
   const navIcon = (href: string) => {
-    if (href === '/') return <Icon name="home" size={14} />
+    if (href === '/home') return <Icon name="home" size={14} />
     if (href === '/popular') return <Icon name="star" size={14} />
     if (href === '/favorites') return <Icon name="heart" size={14} />
     if (href === '/media-types') return <Icon name="grid" size={14} />
@@ -94,10 +94,10 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur border-b border-[#232336]">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-4">
         <Link
           href="/"
-          className="text-lg font-bold bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text text-transparent shrink-0"
+          className="text-base sm:text-lg font-bold bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text text-transparent shrink-0"
         >
           Prompt Library
         </Link>
@@ -157,11 +157,11 @@ export default function Navbar() {
         </div>
 
         {/* ฝั่งขวา: เพิ่ม prompt + auth */}
-        <div className="flex items-center gap-2 ml-auto shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
           <Link
             href={email ? '/prompts/new' : '/login?next=/prompts/new'}
             onClick={handleAddPromptClick}
-            className="px-3.5 py-2 rounded-lg text-sm font-mono whitespace-nowrap bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-400/50 hover:bg-fuchsia-500/20 hover:shadow-[0_0_12px_rgba(255,62,200,0.3)] transition-all"
+            className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-400/50 hover:bg-fuchsia-500/20 hover:shadow-[0_0_12px_rgba(255,62,200,0.3)] transition-all"
           >
             + เพิ่ม Prompt
           </Link>
@@ -172,14 +172,14 @@ export default function Navbar() {
                 <>
                 <Link
                   href="/profile"
-                  className="px-3.5 py-2 rounded-lg text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
                   title={email}
                 >
                   Profile
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="px-3.5 py-2 rounded-lg text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-fuchsia-400/50 hover:text-fuchsia-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-fuchsia-400/50 hover:text-fuchsia-300 transition-all"
                   title={email}
                 >
                   ออกจากระบบ
@@ -188,7 +188,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-3.5 py-2 rounded-lg text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
+                  className="px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-mono whitespace-nowrap bg-[#12121c] text-[#c8c8d4] border border-[#232336] hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
                 >
                   เข้าสู่ระบบ
                 </Link>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import ImageGallery from '@/app/components/ImageGallery'
 import CopyPromptButton from '@/app/components/CopyPromptButton'
 import StarRating from '@/app/components/StarRating'
@@ -60,23 +61,24 @@ export default async function PromptDetailPage({
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-fuchsia-500/15 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative max-w-5xl mx-auto px-6 py-8">
-        <a
-          href="/"
-          className="text-sm text-cyan-400 hover:text-cyan-300 font-mono transition-colors"
+        <Link
+          href="/home"
+          className="animate-spring-up inline-block text-sm text-cyan-400 hover:text-cyan-300 font-mono transition-colors"
         >
           ← กลับหน้ารายการ
-        </a>
+        </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-4">
-          <div className="lg:col-span-3">
+          <div className="animate-spring-up [animation-delay:60ms] lg:col-span-3">
             <ImageGallery
               coverImageUrl={prompt.cover_image_url}
               examples={sortedExamples}
               title={prompt.title}
+              transitionName={`prompt-cover-${prompt.prompt_id}`}
             />
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="animate-spring-up [animation-delay:120ms] lg:col-span-2">
             <div className="flex gap-2 mb-3">
               {prompt.categories && (
                 <span className="text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-full flex items-center gap-1">

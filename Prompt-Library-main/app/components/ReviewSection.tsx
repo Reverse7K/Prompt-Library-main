@@ -116,9 +116,10 @@ export default function ReviewSection({ promptId }: { promptId: string }) {
 
   return (
     <div className="mt-10 pt-8 border-t border-[#232336]">
-      <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-4 uppercase">
-        // reviews · {reviews.length}
-      </p>
+      <h2 className="section-title text-2xl font-extrabold text-[#f2f2f7] mb-4">
+        รีวิว
+        <span className="text-base font-mono font-medium text-cyan-400/80">({reviews.length})</span>
+      </h2>
 
       {/* ฟอร์มให้คะแนน */}
       <form

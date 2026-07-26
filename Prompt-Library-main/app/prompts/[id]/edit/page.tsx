@@ -53,12 +53,7 @@ export default async function EditPromptPage({
       />
 
       <div className="relative max-w-2xl mx-auto px-6 py-12">
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">
-          // edit_prompt
-        </p>
-        <h1
-          className="text-3xl font-bold mb-8 text-[#f2f2f7]"
-        >
+        <h1 className="section-title text-4xl font-extrabold mb-8 text-[#f2f2f7]">
           แก้ไข Prompt
         </h1>
 

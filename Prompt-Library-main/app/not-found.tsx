@@ -2,10 +2,6 @@ export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-4 uppercase">
-          // 404_not_found
-        </p>
-
         <h1
           className="text-7xl font-bold mb-4 bg-gradient-to-r from-cyan-300 via-cyan-200 to-fuchsia-400 bg-clip-text text-transparent"
         >

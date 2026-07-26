@@ -36,8 +36,7 @@ export default async function ProfilePage() {
 
   if (!user) return (
     <main className="max-w-6xl mx-auto px-6 py-20 text-center">
-      <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-4 uppercase">// profile</p>
-      <h1 className="text-3xl font-bold mb-3">โปรไฟล์ของฉัน</h1>
+      <h1 className="section-title section-title-center text-4xl font-extrabold mb-3">โปรไฟล์ของฉัน</h1>
       <p className="text-[#8888a0] mb-6">เข้าสู่ระบบเพื่อดู Prompt รายการโปรด และสถิติของคุณ</p>
       <Link href="/login?next=/profile" className="inline-flex px-5 py-2.5 rounded-lg font-mono text-sm bg-cyan-500/10 text-cyan-300 border border-cyan-400/60 hover:bg-cyan-500/20 transition-all">เข้าสู่ระบบ</Link>
     </main>
@@ -68,8 +67,7 @@ export default async function ProfilePage() {
     <main className="max-w-6xl mx-auto px-6 py-12">
       <section className="rounded-2xl border border-[#232336] bg-[#12121c] p-6 sm:p-8 mb-10 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-52 h-52 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">// profile</p>
-        <h1 className="text-3xl font-bold text-[#f2f2f7]">โปรไฟล์ของฉัน</h1>
+        <h1 className="section-title text-4xl font-extrabold text-[#f2f2f7]">โปรไฟล์ของฉัน</h1>
         <p className="text-[#8888a0] mt-1">{user.email}</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
           {stats.map((stat, index) => <div key={stat.label} className="rounded-xl border border-[#232336] bg-[#0a0a0f]/70 px-4 py-4"><Icon name={statIcons[index]} size={18} className={`${stat.color} mb-2`} /><p className={`text-2xl font-bold ${stat.color}`}>{stat.value.toLocaleString('th-TH')}</p><p className="text-xs text-[#8888a0] font-mono mt-1">{stat.label}</p></div>)}
@@ -77,8 +75,8 @@ export default async function ProfilePage() {
       </section>
 
       <section className="mb-12">
-        <div className="flex items-center justify-between mb-5"><div><p className="text-xs tracking-[0.2em] text-cyan-400/80 font-mono uppercase">// my_prompts</p><h2 className="text-2xl font-bold text-[#f2f2f7] mt-1">Prompt ที่ฉันสร้าง</h2></div><Link href="/prompts/new" className="text-sm text-cyan-300 hover:text-cyan-200">+ เพิ่ม Prompt</Link></div>
-        {createdPrompts.length === 0 ? <div className="rounded-xl border border-dashed border-[#232336] text-center py-12 text-[#8888a0]">ยังไม่มี Prompt ที่สร้างไว้</div> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{createdPrompts.map((prompt) => <PromptCard key={prompt.prompt_id} prompt={prompt} />)}</div>}
+        <div className="flex items-center justify-between mb-5"><div><h2 className="section-title text-2xl font-extrabold text-[#f2f2f7]">Prompt ที่ฉันสร้าง</h2></div><Link href="/prompts/new" className="text-sm text-cyan-300 hover:text-cyan-200">+ เพิ่ม Prompt</Link></div>
+        {createdPrompts.length === 0 ? <div className="rounded-xl border border-dashed border-[#232336] text-center py-12 text-[#8888a0]">ยังไม่มี Prompt ที่สร้างไว้</div> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{createdPrompts.map((prompt, i) => <PromptCard key={prompt.prompt_id} prompt={prompt} index={i} />)}</div>}
       </section>
 
       <section className="grid lg:grid-cols-2 gap-6">

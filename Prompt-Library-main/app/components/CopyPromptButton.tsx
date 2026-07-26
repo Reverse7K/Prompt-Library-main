@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { showToast } from '@/app/components/Toast'
 import type { User } from '@supabase/supabase-js'
 
 type CopyPromptButtonProps = {
@@ -38,6 +39,7 @@ export default function CopyPromptButton({
     try {
       await navigator.clipboard.writeText(promptText)
       setCopied(true)
+      showToast('คัดลอก Prompt แล้ว')
       setTimeout(() => setCopied(false), 2000)
 
       setCopyCount((prev) => prev + 1)
@@ -56,6 +58,7 @@ export default function CopyPromptButton({
       router.refresh()
     } catch (err) {
       console.error('Copy failed:', err)
+      showToast('คัดลอกไม่สำเร็จ ลองใหม่อีกครั้ง', 'error')
       setCopyCount((prev) => Math.max(prev - 1, 0))
     }
   }

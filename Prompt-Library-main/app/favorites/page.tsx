@@ -23,10 +23,7 @@ export default async function FavoritesPage() {
   if (!user) {
     return (
       <main className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-4 uppercase">
-          // favorites
-        </p>
-        <h1 className="text-3xl font-bold mb-3 text-[#f2f2f7]">รายการโปรด</h1>
+        <h1 className="section-title text-4xl font-extrabold mb-3 text-[#f2f2f7]">รายการโปรด</h1>
         <p className="text-[#8888a0] mb-6">เข้าสู่ระบบเพื่อดู Prompt ที่คุณบันทึกไว้</p>
         <Link
           href="/login?next=/favorites"
@@ -54,10 +51,7 @@ export default async function FavoritesPage() {
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12">
-      <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">
-        // favorites
-      </p>
-      <h1 className="text-3xl font-bold mb-1 text-[#f2f2f7]">รายการโปรด</h1>
+      <h1 className="section-title text-4xl font-extrabold mb-1 text-[#f2f2f7]">รายการโปรด</h1>
       <p className="text-[#8888a0] text-sm mb-8">Prompt ที่คุณบันทึกไว้</p>
 
       {error && (
@@ -69,7 +63,7 @@ export default async function FavoritesPage() {
       {!error && prompts.length === 0 && (
         <div className="text-center py-16 border border-dashed border-[#232336] rounded-xl">
           <p className="text-[#8888a0] font-mono text-sm">{'> '}ยังไม่มี Prompt ในรายการโปรด</p>
-          <Link href="/" className="inline-block mt-4 text-sm text-cyan-300 hover:text-cyan-200">
+          <Link href="/home" className="inline-block mt-4 text-sm text-cyan-300 hover:text-cyan-200">
             ไปเลือก Prompt
           </Link>
         </div>
@@ -77,8 +71,8 @@ export default async function FavoritesPage() {
 
       {prompts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {prompts.map((prompt) => (
-            <PromptCard key={prompt.prompt_id} prompt={prompt} />
+          {prompts.map((prompt, i) => (
+            <PromptCard key={prompt.prompt_id} prompt={prompt} index={i} />
           ))}
         </div>
       )}

@@ -16,9 +16,9 @@ export default function Error({
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <p className="text-xs tracking-[0.3em] text-fuchsia-400/80 font-mono mb-4 uppercase">
-          // error_caught
-        </p>
+        <h2 className="section-title section-title-center text-2xl font-extrabold text-fuchsia-300 mb-4">
+          เกิดข้อผิดพลาด
+        </h2>
 
         <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center">
           <svg

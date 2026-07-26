@@ -12,12 +12,7 @@ export default async function AiModelsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <p className="text-xs tracking-[0.3em] text-cyan-400/80 font-mono mb-2 uppercase">
-        // ai_models
-      </p>
-      <h1
-        className="text-3xl font-bold mb-1 text-[#f2f2f7]"
-      >
+      <h1 className="section-title text-4xl font-extrabold mb-1 text-[#f2f2f7]">
         โมเดล AI
       </h1>
       <p className="text-[#8888a0] text-sm mb-8">เลือกดู Prompt ที่ใช้ได้กับโมเดลนี้</p>

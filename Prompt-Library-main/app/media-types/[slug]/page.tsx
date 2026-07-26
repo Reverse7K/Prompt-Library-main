@@ -47,8 +47,8 @@ export default async function MediaTypeDetailPage({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {prompts?.map((prompt) => (
-          <PromptCard key={prompt.prompt_id} prompt={prompt} />
+        {prompts?.map((prompt, i) => (
+          <PromptCard key={prompt.prompt_id} prompt={prompt} index={i} />
         ))}
       </div>
     </div>
