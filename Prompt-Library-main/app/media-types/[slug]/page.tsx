@@ -2,6 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import PromptCard from '@/app/components/PromptCard'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Icon from '@/app/components/Icon'
+
+// ใช้ชุดเดียวกับหน้า /media-types
+const mediaIcons: Record<string, 'image' | 'video' | 'audio' | 'document' | 'text'> = {
+  image: 'image',
+  video: 'video',
+  audio: 'audio',
+  document: 'document',
+  text: 'text',
+}
 
 export default async function MediaTypeDetailPage({
   params,
@@ -32,11 +42,12 @@ export default async function MediaTypeDetailPage({
         ← กลับไปประเภทสื่อ
       </Link>
 
-      <h1
-        className="section-title text-4xl font-extrabold mt-4 mb-8"
-      >
-        {mediaType.name}
-      </h1>
+      <div className="mt-4 mb-8 flex items-center gap-4">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-accent/30 bg-accent/10 text-accent">
+          <Icon name={mediaIcons[mediaType.slug] ?? 'grid'} size={24} />
+        </span>
+        <h1 className="section-title text-4xl font-extrabold">{mediaType.name}</h1>
+      </div>
 
       {error && <p className="text-accent2">เกิดข้อผิดพลาด: {error.message}</p>}
 

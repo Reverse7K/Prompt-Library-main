@@ -38,10 +38,10 @@ export default async function HistoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      <h1 className="section-title text-4xl font-extrabold mb-1 text-ink">
+      <h1 className="animate-spring-up section-title text-4xl font-extrabold mb-1 text-ink">
         ประวัติการใช้งาน
       </h1>
-      <p className="text-muted text-sm mb-8">50 รายการล่าสุด</p>
+      <p className="animate-spring-up [animation-delay:60ms] text-muted text-sm mb-8">50 รายการล่าสุด</p>
 
       {error && <p className="text-accent2">เกิดข้อผิดพลาด: {error.message}</p>}
 
@@ -52,11 +52,12 @@ export default async function HistoryPage() {
       )}
 
       <div className="flex flex-col gap-2">
-        {history?.map((h: any) => (
+        {history?.map((h: any, i: number) => (
           <Link
             key={h.history_id}
             href={h.prompts ? `/prompts/${h.prompts.prompt_id}` : '#'}
-            className="flex items-center justify-between px-4 py-3 rounded-lg bg-surface border border-line hover:border-accent/60 transition-all"
+            style={{ animationDelay: `${120 + Math.min(i, 12) * 45}ms` }}
+            className="animate-spring-up flex items-center justify-between px-4 py-3 rounded-lg bg-surface border border-line hover:border-accent/60 hover:-translate-y-0.5 transition-[translate,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
             <div>
               <p className="text-sm text-ink">{h.prompts?.title ?? 'Prompt ถูกลบแล้ว'}</p>

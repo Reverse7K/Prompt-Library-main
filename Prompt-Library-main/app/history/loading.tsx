@@ -1,9 +1,8 @@
 export default function Loading() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="h-3 w-32 rounded bg-surface animate-pulse mb-3" />
-      <div className="h-9 w-56 rounded bg-surface animate-pulse mb-2" />
-      <div className="h-4 w-40 rounded bg-surface animate-pulse mb-8" />
+      <div className="h-10 w-64 rounded bg-surface animate-pulse mb-3" />
+      <div className="h-4 w-32 rounded bg-surface animate-pulse mb-8" />
 
       <div className="flex flex-col gap-2">
         {Array.from({ length: 6 }).map((_, i) => (
