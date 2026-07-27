@@ -11,6 +11,7 @@ type Prompt = {
   title: string
   prompt_text: string
   cover_image_url: string | null
+  cover_position?: string | null
   view_count: number
   like_count: number
   copy_count?: number

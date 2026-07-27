@@ -7,6 +7,7 @@ import StarRating from '@/app/components/StarRating'
 import ReviewSection from '@/app/components/ReviewSection'
 import LikeButton from '@/app/components/LikeButton'
 import ViewTracker from '@/app/components/ViewTracker'
+import AuthorBadge from '@/app/components/AuthorBadge'
 import PromptOwnerActions from '@/app/components/PromptOwnerActions'
 
 export default async function PromptDetailPage({
@@ -27,7 +28,8 @@ export default async function PromptDetailPage({
       *,
       categories (name, slug),
       media_types (name, slug),
-      prompt_examples (example_id, file_url, sort_order),
+      profiles (username, display_name, avatar_url),
+      prompt_examples (example_id, file_url, sort_order, position, zoom),
       prompt_ai_models (ai_models (ai_model_id, name, provider, logo_url))
     `)
     .eq('prompt_id', id)
@@ -79,6 +81,8 @@ export default async function PromptDetailPage({
               examples={sortedExamples}
               title={prompt.title}
               transitionName={`prompt-cover-${prompt.prompt_id}`}
+              coverPosition={prompt.cover_position}
+              coverZoom={prompt.cover_zoom}
             />
           </div>
 
@@ -105,6 +109,10 @@ export default async function PromptDetailPage({
             <h1 className="animate-spring-up [animation-delay:220ms] section-title text-3xl font-extrabold mb-2">
               {prompt.title}
             </h1>
+
+            <div className="animate-spring-up [animation-delay:250ms] mb-4">
+              <AuthorBadge author={prompt.profiles} createdAt={prompt.created_at} />
+            </div>
 
             {/* คะแนนเฉลี่ย */}
             <div className="animate-spring-up [animation-delay:280ms] flex items-center gap-2 mb-3">

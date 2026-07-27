@@ -23,7 +23,7 @@ export default async function EditPromptPage({
     .select(
       `
       *,
-      prompt_examples (example_id, file_url, sort_order),
+      prompt_examples (example_id, file_url, sort_order, position, zoom),
       prompt_ai_models (ai_model_id)
     `
     )
@@ -90,14 +90,18 @@ export default async function EditPromptPage({
             category_id: prompt.category_id,
             media_type_id: prompt.media_type_id,
             cover_image_url: prompt.cover_image_url,
+            cover_position: prompt.cover_position,
+            cover_zoom: prompt.cover_zoom,
             is_public: prompt.is_public,
             selectedAiModelIds: (prompt.prompt_ai_models ?? []).map(
               (m: { ai_model_id: string }) => m.ai_model_id
             ),
             existingExamples: sortedExamples.map(
-              (ex: { example_id: string; file_url: string }) => ({
+              (ex: { example_id: string; file_url: string; position?: string; zoom?: number }) => ({
                 example_id: ex.example_id,
                 file_url: ex.file_url,
+                position: ex.position,
+                zoom: ex.zoom,
               })
             ),
           }}

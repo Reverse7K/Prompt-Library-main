@@ -14,6 +14,8 @@ type PromptCardProps = {
     title: string
     prompt_text: string
     cover_image_url: string | null
+    cover_position?: string | null
+    cover_zoom?: number | null
     view_count: number
     like_count: number
     copy_count?: number
@@ -82,6 +84,10 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
             <img
               src={prompt.cover_image_url}
               alt={prompt.title}
+              style={{
+                objectPosition: prompt.cover_position ?? '50% 50%',
+                transform: `scale(${prompt.cover_zoom ?? 1})`,
+              }}
               className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08]"
             />
           </ViewTransition>

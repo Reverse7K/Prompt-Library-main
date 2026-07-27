@@ -4,10 +4,19 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SelectMenu from '@/app/components/SelectMenu'
+import ImageCropBox, { DEFAULT_CROP } from '@/app/components/ImageCropBox'
+import ExampleImagesEditor, { type ExampleItem } from '@/app/components/ExampleImagesEditor'
+import { showToast } from '@/app/components/Toast'
+import { MAX_DIMENSION, MAX_SOURCE_BYTES, formatMB, prepareImageUpload } from '@/lib/prepareImageUpload'
 
 type Option = { id: string; name: string }
 
-type ExistingExample = { example_id: string; file_url: string }
+type ExistingExample = {
+  example_id: string
+  file_url: string
+  position?: string | null
+  zoom?: number | null
+}
 
 type PromptFormProps = {
   categories: Option[]
@@ -23,6 +32,8 @@ type PromptFormProps = {
     category_id: string | null
     media_type_id: string | null
     cover_image_url: string | null
+    cover_position?: string | null
+    cover_zoom?: number | null
     is_public: boolean
     selectedAiModelIds: string[]
     existingExamples: ExistingExample[]
@@ -52,33 +63,42 @@ export default function PromptForm({
   )
 
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  // ตำแหน่งที่จะโชว์รูปในกรอบการ์ด เก็บเป็นค่า CSS object-position
+  const [coverCrop, setCoverCrop] = useState({
+    position: initialData?.cover_position ?? DEFAULT_CROP.position,
+    zoom: initialData?.cover_zoom ?? DEFAULT_CROP.zoom,
+  })
   const [coverPreview, setCoverPreview] = useState<string | null>(
     initialData?.cover_image_url ?? null
   )
 
-  const [exampleFiles, setExampleFiles] = useState<File[]>([])
-  const [examplePreviews, setExamplePreviews] = useState<string[]>([])
-  const existingExamples = initialData?.existingExamples ?? []
+  // รวมรูปเดิมกับรูปใหม่ไว้ในลิสต์เดียว ลำดับในลิสต์คือลำดับจริงที่จะบันทึก
+  const [examples, setExamples] = useState<ExampleItem[]>(() =>
+    (initialData?.existingExamples ?? []).map((ex) => ({
+      key: ex.example_id,
+      existingId: ex.example_id,
+      url: ex.file_url,
+      position: ex.position ?? DEFAULT_CROP.position,
+      zoom: ex.zoom ?? DEFAULT_CROP.zoom,
+    }))
+  )
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = '' // เลือกไฟล์เดิมซ้ำได้
     if (!file) return
-    setCoverFile(file)
-    setCoverPreview(URL.createObjectURL(file))
-  }
 
-  function handleExamplesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    setExampleFiles((prev) => [...prev, ...files])
-    setExamplePreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))])
-  }
-
-  function removeNewExample(idx: number) {
-    setExampleFiles((prev) => prev.filter((_, i) => i !== idx))
-    setExamplePreviews((prev) => prev.filter((_, i) => i !== idx))
+    try {
+      // ย่อตั้งแต่ตอนเลือก ผู้ใช้จะได้เห็นเลยว่าไฟล์ใหญ่เกินไปตั้งแต่ต้น ไม่ใช่ไปพังตอนกดบันทึก
+      const prepared = await prepareImageUpload(file)
+      setCoverFile(prepared)
+      setCoverPreview(URL.createObjectURL(prepared))
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'เตรียมรูปไม่สำเร็จ', 'error')
+    }
   }
 
   function toggleModel(id: string) {
@@ -125,6 +145,8 @@ export default function PromptForm({
         category_id: categoryId || null,
         media_type_id: mediaTypeId || null,
         cover_image_url: coverImageUrl,
+        cover_position: coverCrop.position,
+        cover_zoom: coverCrop.zoom,
         is_public: isPublic,
       }
 
@@ -169,17 +191,40 @@ export default function PromptForm({
         if (modelsError) throw modelsError
       }
 
-      // 3. อัปโหลดภาพตัวอย่างเพิ่มเติม (ถ้ามี) แล้วบันทึกลง prompt_examples
-      if (exampleFiles.length > 0) {
-        const startOrder = existingExamples.length
-        for (let i = 0; i < exampleFiles.length; i++) {
-          const url = await uploadFile(exampleFiles[i], 'examples')
-          await supabase.from('prompt_examples').insert({
-            prompt_id: finalPromptId,
-            file_url: url,
-            sort_order: startOrder + i,
-          })
+      /*
+        3. ภาพตัวอย่าง — ลำดับบนหน้าจอคือลำดับจริง (sort_order = index)
+           รูปที่ถูกลบออกจากรายการ = รูปเดิมที่ไม่เหลืออยู่แล้ว ต้องลบออกจากฐานข้อมูลด้วย
+      */
+      const keptIds = new Set(examples.filter((it) => it.existingId).map((it) => it.existingId))
+      const removedIds = (initialData?.existingExamples ?? [])
+        .map((ex) => ex.example_id)
+        .filter((id) => !keptIds.has(id))
+
+      if (removedIds.length > 0) {
+        const { error: delError } = await supabase
+          .from('prompt_examples')
+          .delete()
+          .in('example_id', removedIds)
+        if (delError) throw delError
+      }
+
+      for (let i = 0; i < examples.length; i++) {
+        const item = examples[i]
+        // อัปโหลดเฉพาะรูปที่เพิ่งเลือกใหม่ รูปเดิมใช้ URL เดิมต่อได้เลย
+        const fileUrl = item.file ? await uploadFile(item.file, 'examples') : item.url
+
+        const row = {
+          file_url: fileUrl,
+          sort_order: i,
+          position: item.position,
+          zoom: item.zoom,
         }
+
+        const { error: exError } = item.existingId
+          ? await supabase.from('prompt_examples').update(row).eq('example_id', item.existingId)
+          : await supabase.from('prompt_examples').insert({ ...row, prompt_id: finalPromptId })
+
+        if (exError) throw exError
       }
 
       router.push(`/prompts/${finalPromptId}`)
@@ -305,59 +350,36 @@ export default function PromptForm({
       {/* ภาพหลัก */}
       <div>
         <label className={labelClass}>ภาพหลัก (Cover Image)</label>
-        <div className="flex items-start gap-4">
-          <div className="w-32 h-32 rounded-lg bg-surface border border-line overflow-hidden shrink-0 flex items-center justify-center">
-            {coverPreview ? (
-              <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xs text-faint font-mono">no image</span>
-            )}
+        <p className="mb-2 font-mono text-[11px] text-faint">
+          ไฟล์ไม่เกิน {formatMB(MAX_SOURCE_BYTES)} · ระบบย่อให้ด้านยาวสุดไม่เกิน {MAX_DIMENSION}px
+          ให้อัตโนมัติ
+        </p>
+
+        {coverPreview ? (
+          <div className="space-y-3">
+            <ImageCropBox src={coverPreview} value={coverCrop} onChange={setCoverCrop} />
+            <label className="inline-block cursor-pointer px-4 py-2.5 rounded-lg text-sm font-mono border border-accent/40 text-accent hover:bg-accent/10 hover:border-accent transition-all">
+              เปลี่ยนรูป
+              <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+            </label>
           </div>
-          <label className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-mono border border-accent/40 text-accent hover:bg-accent/10 hover:border-accent transition-all">
-            เลือกไฟล์ภาพ
-            <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
-          </label>
-        </div>
+        ) : (
+          <div className="flex items-start gap-4">
+            <div className="aspect-video w-40 rounded-lg bg-surface border border-line overflow-hidden shrink-0 flex items-center justify-center">
+              <span className="text-xs text-faint font-mono">no image</span>
+            </div>
+            <label className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-mono border border-accent/40 text-accent hover:bg-accent/10 hover:border-accent transition-all">
+              เลือกไฟล์ภาพ
+              <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+            </label>
+          </div>
+        )}
       </div>
 
       {/* ภาพตัวอย่างเพิ่มเติม */}
       <div>
         <label className={labelClass}>ภาพตัวอย่างเพิ่มเติม (เลือกได้หลายรูป)</label>
-
-        <div className="flex flex-wrap gap-3 mb-3">
-          {existingExamples.map((ex) => (
-            <div
-              key={ex.example_id}
-              className="w-20 h-20 rounded-lg overflow-hidden border border-line"
-            >
-              <img src={ex.file_url} alt="" className="w-full h-full object-cover" />
-            </div>
-          ))}
-
-          {examplePreviews.map((url, idx) => (
-            <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-accent/40">
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeNewExample(idx)}
-                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 text-white text-xs flex items-center justify-center"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <label className="inline-block cursor-pointer px-4 py-2.5 rounded-lg text-sm font-mono border border-line text-muted hover:border-accent/40 hover:text-accent transition-all">
-          + เพิ่มภาพตัวอย่าง
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleExamplesChange}
-            className="hidden"
-          />
-        </label>
+        <ExampleImagesEditor items={examples} onChange={setExamples} />
       </div>
 
       {/* เผยแพร่สาธารณะ */}

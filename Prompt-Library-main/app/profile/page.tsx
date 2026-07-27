@@ -9,6 +9,7 @@ type Prompt = {
   title: string
   prompt_text: string
   cover_image_url: string | null
+  cover_position?: string | null
   view_count: number
   like_count: number
   copy_count?: number
@@ -44,7 +45,7 @@ export default async function ProfilePage() {
   )
 
   const [createdResult, favoritesResult, historyResult, profileResult] = await Promise.all([
-    supabase.from('prompts').select('prompt_id, title, prompt_text, cover_image_url, view_count, like_count, copy_count, categories(name), media_types(name)', { count: 'exact' }).eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
+    supabase.from('prompts').select('prompt_id, title, prompt_text, cover_image_url, cover_position, view_count, like_count, copy_count, categories(name), media_types(name)', { count: 'exact' }).eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
     supabase.from('favorites').select('favorite_id', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('usage_history').select('history_id, action_type, used_at, prompts(prompt_id, title)').eq('user_id', user.id).order('used_at', { ascending: false }).limit(5),
     supabase.from('profiles').select('display_name, avatar_url').eq('id', user.id).maybeSingle(),
