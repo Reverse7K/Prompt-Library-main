@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client'
  *
  * 1. query ของ supabase-js เป็น lazy builder จะส่ง request ก็ต่อเมื่อมี await หรือ .then()
  *    โค้ดเดิมเรียกแบบ fire-and-forget ไม่ await เลย จึง "ไม่เคยยิงออกไปเลยแม้แต่ครั้งเดียว"
- *    (ยืนยันจากฐานข้อมูล: usage_history มีแถว view 0 แถวทุก prompt)
  *
  * 2. ถ้าแก้เป็น await ในหน้า server จะโดนนับตอน Next prefetch หน้าไว้ล่วงหน้าด้วย
  *    ยอดจะพุ่งทั้งที่ยังไม่มีใครเปิดดูจริง
@@ -26,18 +25,7 @@ export default function ViewTracker({ promptId }: { promptId: string }) {
     const supabase = createClient()
 
     async function track() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      await Promise.all([
-        supabase.rpc('increment_view_count', { prompt_id_input: promptId }),
-        supabase.from('usage_history').insert({
-          prompt_id: promptId,
-          user_id: user?.id ?? null,
-          action_type: 'view',
-        }),
-      ])
+      await supabase.rpc('increment_view_count', { prompt_id_input: promptId })
     }
 
     track().catch((err) => {

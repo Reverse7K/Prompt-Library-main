@@ -510,7 +510,6 @@ model ai_models {
   created_at       DateTime?          @default(now()) @db.Timestamptz(6)
   media_types      media_types?       @relation(fields: [media_type_id], references: [media_type_id], onDelete: NoAction, onUpdate: NoAction)
   prompt_ai_models prompt_ai_models[]
-  usage_history    usage_history[]
 
   @@schema("public")
 }
@@ -573,7 +572,7 @@ model profiles {
   users         users           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   prompts       prompts[]
   reviews       reviews[]
-  usage_history usage_history[]
+  prompt_copies prompt_copies[]
 
   @@schema("public")
 }
@@ -647,7 +646,7 @@ model prompts {
   media_types      media_types?             @relation(fields: [media_type_id], references: [media_type_id], onDelete: NoAction, onUpdate: NoAction)
   profiles         profiles?                @relation(fields: [user_id], references: [id], onUpdate: NoAction)
   reviews          reviews[]
-  usage_history    usage_history[]
+  prompt_copies    prompt_copies[]
 
   @@index([category_id], map: "idx_prompts_category")
   @@index([created_at(sort: Desc)], map: "idx_prompts_created")
@@ -686,20 +685,19 @@ model tags {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model usage_history {
-  history_id  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_id     String?    @db.Uuid
-  prompt_id   String?    @db.Uuid
-  action_type String     @db.VarChar(20)
-  ai_model_id String?    @db.Uuid
-  used_at     DateTime?  @default(now()) @db.Timestamptz(6)
-  ai_models   ai_models? @relation(fields: [ai_model_id], references: [ai_model_id], onDelete: NoAction, onUpdate: NoAction)
-  prompts     prompts?   @relation(fields: [prompt_id], references: [prompt_id], onDelete: Cascade, onUpdate: NoAction)
-  profiles    profiles?  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+/// เก็บแค่คู่ผู้ใช้–prompt ที่เคยกดคัดลอก ไว้กันนับซ้ำของ copy_count ไม่ใช่ประวัติการใช้งาน
+/// PK เป็นคอลัมน์ของตัวเองแล้วกันซ้ำด้วย unique เหมือน favorites
+/// ถ้าตั้ง PK เป็น (user_id, prompt_id) PostgREST จะมองว่าเป็นตารางเชื่อม many-to-many
+/// แล้วการ embed profiles(...) จาก prompts จะกำกวมจนหน้ารายละเอียดพัง
+model prompt_copies {
+  copy_id   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id   String   @db.Uuid
+  prompt_id String   @db.Uuid
+  prompts   prompts  @relation(fields: [prompt_id], references: [prompt_id], onDelete: Cascade, onUpdate: NoAction)
+  profiles  profiles @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([prompt_id], map: "idx_usage_prompt")
-  @@index([used_at(sort: Desc)], map: "idx_usage_used_at")
-  @@index([user_id], map: "idx_usage_user")
+  @@unique([user_id, prompt_id])
+  @@index([prompt_id], map: "idx_prompt_copies_prompt")
   @@schema("public")
 }
 

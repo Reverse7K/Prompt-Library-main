@@ -18,21 +18,6 @@ type Prompt = {
   media_types: { name: string } | null
 }
 
-type HistoryRow = {
-  history_id: string
-  action_type: string
-  used_at: string
-  prompts: { prompt_id: string; title: string }[] | null
-}
-
-type HistoryItem = Omit<HistoryRow, 'prompts'> & {
-  prompts: { prompt_id: string; title: string } | null
-}
-
-const actionLabels: Record<string, string> = {
-  view: 'ดูรายละเอียด', copy: 'คัดลอก Prompt', like: 'เพิ่มรายการโปรด', use: 'ใช้งาน Prompt', download: 'ดาวน์โหลด',
-}
-
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -45,20 +30,15 @@ export default async function ProfilePage() {
     </main>
   )
 
-  const [createdResult, favoritesResult, historyResult, profileResult] = await Promise.all([
+  const [createdResult, favoritesResult, profileResult] = await Promise.all([
     supabase.from('prompts').select('prompt_id, title, prompt_text, cover_image_url, cover_position, status, view_count, like_count, copy_count, categories(name), media_types(name)', { count: 'exact' }).eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
     supabase.from('favorites').select('favorite_id', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('usage_history').select('history_id, action_type, used_at, prompts(prompt_id, title)').eq('user_id', user.id).order('used_at', { ascending: false }).limit(5),
     supabase.from('profiles').select('display_name, avatar_url').eq('id', user.id).maybeSingle(),
   ])
 
   const profile = profileResult.data
 
   const createdPrompts = (createdResult.data ?? []) as unknown as Prompt[]
-  const history = ((historyResult.data ?? []) as unknown as HistoryRow[]).map((item) => ({
-    ...item,
-    prompts: item.prompts?.[0] ?? null,
-  }))
   const totalViews = createdPrompts.reduce((sum, prompt) => sum + (prompt.view_count ?? 0), 0)
   const totalLikes = createdPrompts.reduce((sum, prompt) => sum + (prompt.like_count ?? 0), 0)
   const stats = [
@@ -92,9 +72,8 @@ export default async function ProfilePage() {
         {createdPrompts.length === 0 ? <div className="rounded-xl border border-dashed border-line text-center py-12 text-muted">ยังไม่มี Prompt ที่สร้างไว้</div> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{createdPrompts.map((prompt, i) => <PromptCard key={prompt.prompt_id} prompt={prompt} index={i} />)}</div>}
       </section>
 
-      <section className="grid lg:grid-cols-2 gap-6">
+      <section>
         <div className="rounded-xl border border-line bg-surface p-5"><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-ink">รายการโปรด</h2><Link href="/favorites" className="text-sm text-accent2 hover:text-accent2">ดูทั้งหมด →</Link></div><p className="text-muted text-sm">คุณบันทึก Prompt ที่ชอบไว้ {favoritesResult.count ?? 0} รายการ</p></div>
-        <div className="rounded-xl border border-line bg-surface p-5"><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-ink">ประวัติล่าสุด</h2><Link href="/history" className="text-sm text-accent hover:text-accent-soft">ดูทั้งหมด →</Link></div>{history.length === 0 ? <p className="text-muted text-sm">ยังไม่มีประวัติการใช้งาน</p> : <div className="space-y-3">{history.map((item) => <Link key={item.history_id} href={item.prompts ? `/prompts/${item.prompts.prompt_id}` : '/history'} className="block group"><p className="text-sm text-ink-soft group-hover:text-accent truncate">{item.prompts?.title ?? 'Prompt ที่ถูกลบแล้ว'}</p><p className="text-xs text-faint mt-0.5">{actionLabels[item.action_type] ?? item.action_type} · {new Date(item.used_at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}</p></Link>)}</div>}</div>
       </section>
     </main>
   )

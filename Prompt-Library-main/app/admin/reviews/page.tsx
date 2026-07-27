@@ -1,14 +1,54 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminReviewActions from '@/app/admin/reviews/AdminReviewActions'
+import AdminReviewFilters from '@/app/admin/reviews/AdminReviewFilters'
 
-export default async function AdminReviewsPage() {
+export default async function AdminReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rating?: string; reviewer?: string; q?: string }>
+}) {
   const supabase = await createClient()
+  const { rating, reviewer, q } = await searchParams
 
-  const { data: reviews, error } = await supabase
+  let query = supabase
     .from('reviews')
-    .select('review_id, rating, comment, guest_name, created_at, prompts(title), profiles(username)')
+    .select(
+      'review_id, rating, comment, guest_name, created_at, prompt_id, prompts(title), profiles(username)',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false })
     .limit(100)
+
+  if (rating) query = query.eq('rating', Number(rating))
+  // สมาชิกคือแถวที่ผูก user_id ไว้ ส่วนผู้เยี่ยมชมรีวิวโดยไม่ล็อกอินจึงไม่มี user_id
+  if (reviewer === 'member') query = query.not('user_id', 'is', null)
+  if (reviewer === 'guest') query = query.is('user_id', null)
+
+  /*
+    ค้นหาให้ครอบทั้งข้อความรีวิว ชื่อผู้เยี่ยมชม และชื่อ prompt
+
+    ชื่อ prompt อยู่คนละตาราง และ .or() ผสมเงื่อนไขข้ามตารางไม่ได้
+    เลยหา prompt ที่ชื่อตรงคำค้นมาก่อน แล้วค่อยเอา id มาต่อเป็นอีกเงื่อนไขหนึ่ง
+
+    ต้อง escape % _ \ เพราะเป็นอักขระพิเศษของ LIKE
+    และตัด , ทิ้ง เพราะ .or() ใช้จุลภาคคั่นเงื่อนไข ถ้าไม่กันจะแตกเป็นสองเงื่อนไข
+  */
+  if (q) {
+    const keyword = q.replace(/[%_\\]/g, (ch) => `\\${ch}`).replace(/,/g, '')
+    const { data: matchedPrompts } = await supabase
+      .from('prompts')
+      .select('prompt_id')
+      .ilike('title', `%${keyword}%`)
+      .limit(200)
+
+    const promptIds = (matchedPrompts ?? []).map((p) => p.prompt_id)
+    const conditions = [`comment.ilike.%${keyword}%`, `guest_name.ilike.%${keyword}%`]
+    if (promptIds.length > 0) conditions.push(`prompt_id.in.(${promptIds.join(',')})`)
+
+    query = query.or(conditions.join(','))
+  }
+
+  const { data: reviews, error, count } = await query
 
   return (
     <div>
@@ -17,6 +57,10 @@ export default async function AdminReviewsPage() {
       </h1>
 
       {error && <p className="text-accent2">เกิดข้อผิดพลาด: {error.message}</p>}
+
+      <div className="animate-spring-up [animation-delay:60ms] relative z-20">
+        <AdminReviewFilters total={count ?? reviews?.length ?? 0} />
+      </div>
 
       <div className="flex flex-col gap-2.5">
         {reviews?.map((r: any, i: number) => (
@@ -45,7 +89,9 @@ export default async function AdminReviewsPage() {
         ))}
 
         {reviews?.length === 0 && (
-          <p className="text-center py-10 text-faint font-mono text-sm">ยังไม่มีรีวิว</p>
+          <p className="text-center py-10 text-faint font-mono text-sm">
+            {rating || reviewer || q ? 'ไม่พบรีวิวที่ตรงกับตัวกรอง' : 'ยังไม่มีรีวิว'}
+          </p>
         )}
       </div>
     </div>

@@ -20,7 +20,6 @@ const primaryItems = [
 const moreItems = [
   { label: 'ประเภทสื่อ', href: '/media-types' },
   { label: 'โมเดล AI', href: '/ai-models' },
-  { label: 'ประวัติการใช้งาน', href: '/history' },
 ]
 
 export default function Navbar() {

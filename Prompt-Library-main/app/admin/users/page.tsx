@@ -1,14 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminUserActions from '@/app/admin/users/AdminUserActions'
+import AdminUserFilters from '@/app/admin/users/AdminUserFilters'
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string; status?: string; q?: string }>
+}) {
   const supabase = await createClient()
+  const { role, status, q } = await searchParams
 
-  const { data: users, error } = await supabase
+  let query = supabase
     .from('profiles')
-    .select('id, username, display_name, role, is_banned, banned_reason, created_at')
+    .select('id, username, display_name, role, is_banned, banned_reason, created_at', {
+      count: 'exact',
+    })
     .order('created_at', { ascending: false })
     .limit(100)
+
+  if (role) query = query.eq('role', role)
+  if (status) query = query.eq('is_banned', status === 'banned')
+
+  /*
+    ค้นทั้ง username และชื่อเล่นด้วยคำเดียว
+    ต้อง escape % _ \ ก่อน เพราะเป็นอักขระพิเศษของ LIKE
+    และ escape , ด้วย เพราะ .or() ใช้จุลภาคคั่นเงื่อนไข ถ้าไม่กันจะแตกเป็นสองเงื่อนไข
+  */
+  if (q) {
+    const keyword = q.replace(/[%_\\]/g, (ch) => `\\${ch}`).replace(/,/g, '')
+    query = query.or(`username.ilike.%${keyword}%,display_name.ilike.%${keyword}%`)
+  }
+
+  const { data: users, error, count } = await query
 
   return (
     <div>
@@ -17,6 +40,10 @@ export default async function AdminUsersPage() {
       </h1>
 
       {error && <p className="text-accent2">เกิดข้อผิดพลาด: {error.message}</p>}
+
+      <div className="animate-spring-up [animation-delay:60ms] relative z-20">
+        <AdminUserFilters total={count ?? users?.length ?? 0} />
+      </div>
 
       <div className="animate-spring-up [animation-delay:120ms] rounded-xl bg-surface border border-line overflow-hidden">
         <table className="w-full text-sm">

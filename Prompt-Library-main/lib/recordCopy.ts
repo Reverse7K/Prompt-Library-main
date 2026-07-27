@@ -19,25 +19,23 @@ export async function recordCopy(
     data: { user },
   } = await supabase.auth.getUser()
 
-  let counted = false
+  // คนที่ไม่ได้ล็อกอินแยกไม่ออกว่าเป็นคนเดิมหรือเปล่า จึงไม่นับให้เลย
+  if (!user) return { counted: false }
 
-  if (user) {
-    const { count } = await supabase
-      .from('usage_history')
-      .select('history_id', { count: 'exact', head: true })
-      .eq('prompt_id', promptId)
-      .eq('user_id', user.id)
-      .eq('action_type', 'copy')
+  /*
+    prompt_copies เก็บแค่คู่ (user_id, prompt_id) ไม่มีเวลาและไม่มี action
+    ใช้กันนับซ้ำอย่างเดียว ไม่ใช่ประวัติการใช้งาน
 
-    counted = (count ?? 0) === 0
-  }
+    primary key เป็นคู่นี้อยู่แล้ว เลย insert ตรง ๆ ได้ ถ้าชนแปลว่าคนนี้เคยคัดลอกแล้ว
+    วิธีนี้ไม่มีช่องให้กดรัว ๆ พร้อมกันแล้วนับเบิ้ลแบบเช็คก่อนค่อยเขียน
+  */
+  const { error } = await supabase
+    .from('prompt_copies')
+    .insert({ prompt_id: promptId, user_id: user.id })
 
-  // บันทึกประวัติทุกครั้ง หน้าประวัติการใช้งานจะได้เห็นการกดซ้ำด้วย
-  await supabase.from('usage_history').insert({
-    prompt_id: promptId,
-    user_id: user?.id ?? null,
-    action_type: 'copy',
-  })
+  // 23505 = unique violation คือเคยคัดลอกไปแล้ว ไม่ใช่ความผิดพลาด
+  const counted = !error
+  if (error && error.code !== '23505') throw error
 
   if (counted) {
     await supabase.rpc('increment_copy_count', { prompt_id_input: promptId })

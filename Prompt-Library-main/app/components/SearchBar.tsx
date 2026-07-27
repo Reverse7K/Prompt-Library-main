@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import SearchBox, { type Suggestion } from '@/app/components/SearchBox'
+import { promptSearchFilter } from '@/lib/promptSearch'
 
 export default function SearchBar({
   initialQuery = '',
@@ -10,38 +12,44 @@ export default function SearchBar({
   initialQuery?: string
   compact?: boolean
 }) {
-  const [query, setQuery] = useState(initialQuery)
   const router = useRouter()
+  const supabase = createClient()
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const trimmed = query.trim()
-    if (trimmed) {
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`)
-    }
+  /*
+    ใช้เงื่อนไขชุดเดียวกับหน้า /search รายการแนะนำจึงเป็นผลการค้นหาจริง ๆ ไม่ใช่คนละชุด
+    เอาแค่ 6 รายการพอ ไม่ให้ลิสต์ยาวจนบังหน้าเว็บ
+  */
+  async function fetchSuggestions(keyword: string): Promise<Suggestion[]> {
+    const { data } = await supabase
+      .from('prompts')
+      .select('prompt_id, title, categories(name)')
+      .eq('is_public', true)
+      .or(promptSearchFilter(keyword))
+      .order('created_at', { ascending: false })
+      .limit(6)
+
+    return ((data ?? []) as unknown as {
+      prompt_id: string
+      title: string
+      categories: { name: string } | null
+    }[]).map((row) => ({
+      id: row.prompt_id,
+      label: row.title,
+      hint: row.categories?.name ?? undefined,
+    }))
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`relative ${compact ? 'w-40 sm:w-56' : 'w-full'}`}>
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="ค้นหา prompt..."
-        className="w-full bg-surface border border-line rounded-lg pl-9 pr-3 py-2 text-sm text-ink placeholder:text-faint font-mono focus:outline-none focus:border-accent/60 focus:shadow-[0_0_0_3px_rgba(0,229,255,0.1)] transition-all"
-      />
-    </form>
+    <SearchBox
+      value={initialQuery}
+      placeholder="ค้นหา prompt..."
+      className={compact ? 'w-40 sm:w-56' : 'w-full'}
+      fetchSuggestions={fetchSuggestions}
+      // เลือกรายการแนะนำ = รู้อยู่แล้วว่าจะเอาอันไหน พาไปหน้านั้นเลยไม่ต้องผ่านหน้าผลค้นหา
+      onPick={(item) => router.push(`/prompts/${item.id}`)}
+      onSearch={(kw) => {
+        if (kw) router.push(`/search?q=${encodeURIComponent(kw)}`)
+      }}
+    />
   )
 }

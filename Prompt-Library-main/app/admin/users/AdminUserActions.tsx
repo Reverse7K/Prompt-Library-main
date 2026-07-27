@@ -14,9 +14,13 @@ type AdminUserActionsProps = {
   displayName?: string
 }
 
+/*
+  เลิกใช้ role moderator แล้ว เหลือแค่ user กับ admin
+  แต่ยังมีบัญชีเก่าที่ค่ายังเป็น moderator อยู่ ถ้าไม่ใส่เข้าไปในลิสต์
+  ช่องเลือกของคนนั้นจะว่างเปล่าเพราะหาค่าที่ตรงไม่เจอ จึงเติมให้เฉพาะกรณีนั้น
+*/
 const ROLES = [
   { value: 'user', label: 'user' },
-  { value: 'moderator', label: 'moderator' },
   { value: 'admin', label: 'admin' },
 ]
 
@@ -87,11 +91,15 @@ export default function AdminUserActions({
   return (
     <div className="flex items-center gap-2">
       <SelectMenu
-        className="w-36"
+        className="w-40"
         ariaLabel="เปลี่ยนสิทธิ์ผู้ใช้"
         value={currentRole}
         onChange={handleRoleChange}
-        options={ROLES}
+        options={
+          ROLES.some((r) => r.value === currentRole)
+            ? ROLES
+            : [...ROLES, { value: currentRole, label: `${currentRole} (เลิกใช้แล้ว)` }]
+        }
       />
 
       <button
