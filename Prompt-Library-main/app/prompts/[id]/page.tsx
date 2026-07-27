@@ -6,6 +6,7 @@ import CopyPromptButton from '@/app/components/CopyPromptButton'
 import StarRating from '@/app/components/StarRating'
 import ReviewSection from '@/app/components/ReviewSection'
 import LikeButton from '@/app/components/LikeButton'
+import ViewTracker from '@/app/components/ViewTracker'
 import PromptOwnerActions from '@/app/components/PromptOwnerActions'
 
 export default async function PromptDetailPage({
@@ -40,15 +41,8 @@ export default async function PromptDetailPage({
     notFound()
   }
 
-  supabase.rpc('increment_view_count', { prompt_id_input: id })
-
-  // บันทึก view ลง usage_history ด้วย (เพื่อให้หน้าประวัติการใช้งานมีข้อมูลจริง)
-  // fire-and-forget ไม่ await เพื่อไม่ให้หน้าเว็บโหลดช้า
-  supabase.from('usage_history').insert({
-    prompt_id: id,
-    user_id: user?.id ?? null,
-    action_type: 'view',
-  })
+  // การนับยอดเข้าชมย้ายไปทำที่ <ViewTracker /> ฝั่ง client
+  // (โค้ดเดิมยิงจากตรงนี้แบบไม่ await ซึ่ง supabase-js จะไม่ส่ง request ออกไปเลย)
 
   const sortedExamples = (prompt.prompt_examples ?? []).sort(
     (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
@@ -66,6 +60,9 @@ export default async function PromptDetailPage({
         }}
       />
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent2/15 rounded-full blur-[120px] pointer-events-none glow-blob" />
+
+      <ViewTracker promptId={prompt.prompt_id} />
+
 
       <div className="relative max-w-5xl mx-auto px-6 py-8">
         <Link
