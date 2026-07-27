@@ -34,6 +34,7 @@ type PromptFormProps = {
     cover_image_url: string | null
     cover_position?: string | null
     cover_zoom?: number | null
+    status?: string | null
     is_public: boolean
     selectedAiModelIds: string[]
     existingExamples: ExistingExample[]
@@ -50,6 +51,7 @@ export default function PromptForm({
   const router = useRouter()
   const supabase = createClient()
   const isEditMode = Boolean(promptId)
+  const isDraft = initialData?.status === 'draft'
 
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [promptText, setPromptText] = useState(initialData?.prompt_text ?? '')
@@ -120,7 +122,9 @@ export default function PromptForm({
     return data.publicUrl
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  // intent บอกว่าจะเก็บเป็นฉบับร่างหรือเผยแพร่ ต้องส่งเข้ามาตรง ๆ
+  // เพราะปุ่มสองปุ่มอยู่ในฟอร์มเดียวกัน จะอ่านจาก state ไม่ทันตอนกด
+  async function handleSubmit(e: React.FormEvent, intent: 'draft' | 'publish' = 'publish') {
     e.preventDefault()
     setError(null)
 
@@ -147,7 +151,9 @@ export default function PromptForm({
         cover_image_url: coverImageUrl,
         cover_position: coverCrop.position,
         cover_zoom: coverCrop.zoom,
-        is_public: isPublic,
+        // ฉบับร่างต้องไม่โผล่ในหน้ารวมเด็ดขาด จึงบังคับ is_public = false คู่กับ status เสมอ
+        status: intent === 'draft' ? 'draft' : 'published',
+        is_public: intent === 'draft' ? false : isPublic,
       }
 
       let finalPromptId = promptId
@@ -227,7 +233,11 @@ export default function PromptForm({
         if (exError) throw exError
       }
 
-      router.push(`/prompts/${finalPromptId}`)
+      // ฉบับร่างให้อยู่หน้าแก้ไขต่อ จะได้เขียนต่อได้เลย ส่วนที่เผยแพร่แล้วพาไปดูหน้าจริง
+      showToast(intent === 'draft' ? 'บันทึกฉบับร่างแล้ว' : 'เผยแพร่ Prompt แล้ว')
+      router.push(
+        intent === 'draft' ? `/prompts/${finalPromptId}/edit` : `/prompts/${finalPromptId}`
+      )
       router.refresh()
     } catch (err: any) {
       setError(err.message ?? 'เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่')
@@ -393,18 +403,37 @@ export default function PromptForm({
         <span className="text-sm text-ink-soft">เผยแพร่ให้ทุกคนเห็น (Public)</span>
       </label>
 
-      {/* ปุ่ม submit */}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full py-3 rounded-lg font-mono text-sm font-medium bg-accent/10 text-accent border border-accent/60 hover:bg-accent/20 hover:shadow-[0_0_20px_rgba(0,229,255,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {submitting
-          ? 'กำลังบันทึก...'
-          : isEditMode
-          ? 'บันทึกการแก้ไข'
-          : 'เผยแพร่ Prompt'}
-      </button>
+      {/* ปุ่มบันทึก — ฉบับร่างกับเผยแพร่แยกกันชัดเจน */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={(e) => handleSubmit(e, 'draft')}
+          disabled={submitting}
+          className="flex-1 rounded-lg border border-line py-3 font-mono text-sm font-medium text-muted transition-all hover:border-accent/50 hover:text-accent disabled:opacity-50"
+        >
+          {submitting ? 'กำลังบันทึก...' : 'เก็บเป็นฉบับร่าง'}
+        </button>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex-1 rounded-lg border border-accent/60 bg-accent/10 py-3 font-mono text-sm font-medium text-accent transition-all hover:bg-accent/20 hover:shadow-[0_0_20px_rgba(0,229,255,0.3)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting
+            ? 'กำลังบันทึก...'
+            : isDraft
+            ? 'เผยแพร่เลย'
+            : isEditMode
+            ? 'บันทึกการแก้ไข'
+            : 'เผยแพร่ Prompt'}
+        </button>
+      </div>
+
+      {isDraft && (
+        <p className="text-center font-mono text-xs text-faint">
+          ตอนนี้เป็นฉบับร่าง ยังไม่มีใครเห็นนอกจากคุณ
+        </p>
+      )}
     </form>
   )
 }

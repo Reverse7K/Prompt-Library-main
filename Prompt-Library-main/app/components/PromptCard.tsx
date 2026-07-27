@@ -16,6 +16,7 @@ type PromptCardProps = {
     cover_image_url: string | null
     cover_position?: string | null
     cover_zoom?: number | null
+    status?: string | null
     view_count: number
     like_count: number
     copy_count?: number
@@ -96,6 +97,19 @@ export default function PromptCard({ prompt, index = 0 }: PromptCardProps) {
             no_preview.img
           </div>
         )}
+
+        {/* ป้ายบอกว่ายังเป็นฉบับร่าง เห็นเฉพาะเจ้าของเพราะคนอื่นมองไม่เห็น prompt ที่ยังไม่เผยแพร่ */}
+
+        {prompt.status === 'draft' && (
+
+          <span className="absolute top-3 left-3 z-10 rounded-full border border-accent2/50 bg-base/85 px-2.5 py-1 font-mono text-[11px] text-accent2 backdrop-blur">
+
+            ฉบับร่าง
+
+          </span>
+
+        )}
+
 
         {/* overlay ไล่สีเข้มด้านล่างภาพ เพื่อให้ปุ่มอ่านง่าย */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

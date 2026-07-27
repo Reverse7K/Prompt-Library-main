@@ -92,6 +92,7 @@ export default async function EditPromptPage({
             cover_image_url: prompt.cover_image_url,
             cover_position: prompt.cover_position,
             cover_zoom: prompt.cover_zoom,
+            status: prompt.status,
             is_public: prompt.is_public,
             selectedAiModelIds: (prompt.prompt_ai_models ?? []).map(
               (m: { ai_model_id: string }) => m.ai_model_id
