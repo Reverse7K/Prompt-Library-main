@@ -18,28 +18,47 @@ export default async function EditPromptPage({
     redirect(`/login?next=/prompts/${id}/edit`)
   }
 
+  const { data: prompt, error } = await supabase
+    .from('prompts')
+    .select(
+      `
+      *,
+      prompt_examples (example_id, file_url, sort_order),
+      prompt_ai_models (ai_model_id)
+    `
+    )
+    .eq('prompt_id', id)
+    .single()
+
+  if (error || !prompt) {
+    notFound()
+  }
+
+  // ตรวจสิทธิ์: ต้องเป็นเจ้าของ prompt หรือแอดมินเท่านั้น
+  const isOwner = user.id === prompt.user_id
+  let isAdmin = false
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    isAdmin = profile?.role === 'admin'
+  }
+
+  if (!isOwner && !isAdmin) {
+    redirect(`/prompts/${id}`)
+  }
+
   const [{ data: categories }, { data: mediaTypes }, { data: aiModels }] = await Promise.all([
     supabase.from('categories').select('category_id, name').eq('is_active', true).order('sort_order'),
     supabase.from('media_types').select('media_type_id, name').order('name'),
     supabase.from('ai_models').select('ai_model_id, name').eq('is_active', true).order('name'),
   ])
 
-  const { data: prompt, error } = await supabase
-    .from('prompts')
-    .select(`
-      *,
-      prompt_examples (example_id, file_url),
-      prompt_ai_models (ai_model_id)
-    `)
-    .eq('prompt_id', id)
-    .single()
-
-  if (error || !prompt) notFound()
-
-  // กันคนอื่นแก้ prompt ที่ไม่ใช่ของตัวเอง แม้จะเดา URL ถูกก็ตาม
-  if (prompt.user_id !== user.id) {
-    redirect(`/prompts/${id}`)
-  }
+  const sortedExamples = (prompt.prompt_examples ?? []).sort(
+    (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+  )
 
   return (
     <div className="min-h-screen bg-base relative overflow-hidden">
@@ -54,7 +73,7 @@ export default async function EditPromptPage({
       />
 
       <div className="relative max-w-2xl mx-auto px-6 py-12">
-        <h1 className="section-title text-4xl font-extrabold mb-8 text-ink">
+        <h1 className="animate-spring-up section-title text-4xl font-extrabold mb-8 text-ink">
           แก้ไข Prompt
         </h1>
 
@@ -72,8 +91,15 @@ export default async function EditPromptPage({
             media_type_id: prompt.media_type_id,
             cover_image_url: prompt.cover_image_url,
             is_public: prompt.is_public,
-            selectedAiModelIds: (prompt.prompt_ai_models ?? []).map((m: any) => m.ai_model_id),
-            existingExamples: prompt.prompt_examples ?? [],
+            selectedAiModelIds: (prompt.prompt_ai_models ?? []).map(
+              (m: { ai_model_id: string }) => m.ai_model_id
+            ),
+            existingExamples: sortedExamples.map(
+              (ex: { example_id: string; file_url: string }) => ({
+                example_id: ex.example_id,
+                file_url: ex.file_url,
+              })
+            ),
           }}
         />
       </div>

@@ -6,6 +6,7 @@ import CopyPromptButton from '@/app/components/CopyPromptButton'
 import StarRating from '@/app/components/StarRating'
 import ReviewSection from '@/app/components/ReviewSection'
 import LikeButton from '@/app/components/LikeButton'
+import PromptOwnerActions from '@/app/components/PromptOwnerActions'
 
 export default async function PromptDetailPage({
   params,
@@ -15,7 +16,11 @@ export default async function PromptDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: prompt, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let query = supabase
     .from('prompts')
     .select(`
       *,
@@ -25,8 +30,11 @@ export default async function PromptDetailPage({
       prompt_ai_models (ai_models (ai_model_id, name, provider, logo_url))
     `)
     .eq('prompt_id', id)
-    .eq('is_public', true)
-    .single()
+
+  // ให้เห็น prompt ที่เป็น public เสมอ หรือถ้าเป็นเจ้าของก็เห็นของตัวเองได้แม้จะซ่อนไว้ (is_public = false)
+  query = user ? query.or(`is_public.eq.true,user_id.eq.${user.id}`) : query.eq('is_public', true)
+
+  const { data: prompt, error } = await query.single()
 
   if (error || !prompt) {
     notFound()
@@ -36,12 +44,10 @@ export default async function PromptDetailPage({
 
   // บันทึก view ลง usage_history ด้วย (เพื่อให้หน้าประวัติการใช้งานมีข้อมูลจริง)
   // fire-and-forget ไม่ await เพื่อไม่ให้หน้าเว็บโหลดช้า
-  supabase.auth.getUser().then(({ data: { user } }) => {
-    supabase.from('usage_history').insert({
-      prompt_id: id,
-      user_id: user?.id ?? null,
-      action_type: 'view',
-    })
+  supabase.from('usage_history').insert({
+    prompt_id: id,
+    user_id: user?.id ?? null,
+    action_type: 'view',
   })
 
   const sortedExamples = (prompt.prompt_examples ?? []).sort(
@@ -79,8 +85,8 @@ export default async function PromptDetailPage({
             />
           </div>
 
-          <div className="animate-spring-up [animation-delay:120ms] lg:col-span-2">
-            <div className="flex gap-2 mb-3">
+          <div className="lg:col-span-2">
+            <div className="animate-spring-up [animation-delay:120ms] flex gap-2 mb-3">
               {prompt.categories && (
                 <span className="text-xs font-mono bg-accent/10 text-accent border border-accent/30 px-2.5 py-1 rounded-full flex items-center gap-1">
                   <span className="w-1 h-1 rounded-full bg-accent" />
@@ -95,14 +101,16 @@ export default async function PromptDetailPage({
               )}
             </div>
 
-            <h1
-              className="section-title text-3xl font-extrabold mb-2"
-            >
+            <div className="animate-spring-up [animation-delay:170ms]">
+              <PromptOwnerActions promptId={prompt.prompt_id} ownerId={prompt.user_id} />
+            </div>
+
+            <h1 className="animate-spring-up [animation-delay:220ms] section-title text-3xl font-extrabold mb-2">
               {prompt.title}
             </h1>
 
             {/* คะแนนเฉลี่ย */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="animate-spring-up [animation-delay:280ms] flex items-center gap-2 mb-3">
               <StarRating value={prompt.average_rating ?? 0} readOnly size={16} />
               <span className="text-xs text-muted font-mono">
                 {prompt.average_rating > 0 ? prompt.average_rating.toFixed(1) : 'ยังไม่มีคะแนน'}
@@ -110,7 +118,7 @@ export default async function PromptDetailPage({
               </span>
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-faint font-mono mb-6">
+            <div className="animate-spring-up [animation-delay:330ms] flex items-center gap-4 text-xs text-faint font-mono mb-6">
               <span>👁 {prompt.view_count} ครั้งที่ดู</span>
               <LikeButton
                 promptId={prompt.prompt_id}
@@ -119,7 +127,7 @@ export default async function PromptDetailPage({
               />
             </div>
 
-            <div className="bg-surface border border-line rounded-lg p-4 mb-3">
+            <div className="animate-spring-up [animation-delay:390ms] bg-surface border border-line rounded-lg p-4 mb-3">
               <p className="text-xs font-mono font-medium text-accent/80 tracking-widest mb-2 uppercase">
                 Prompt
               </p>
@@ -128,11 +136,13 @@ export default async function PromptDetailPage({
               </p>
             </div>
 
-            <CopyPromptButton
-              promptId={prompt.prompt_id}
+            <div className="animate-spring-up [animation-delay:450ms]">
+              <CopyPromptButton
+                promptId={prompt.prompt_id}
               promptText={prompt.prompt_text}
-              initialCopyCount={prompt.copy_count}
-            />
+                initialCopyCount={prompt.copy_count}
+              />
+            </div>
 
             {prompt.negative_prompt && (
               <div className="bg-accent2/5 border border-accent2/20 rounded-lg p-4 mt-4">
@@ -182,7 +192,9 @@ export default async function PromptDetailPage({
         </div>
 
         {/* ระบบ Rating/Comment */}
-        <ReviewSection promptId={prompt.prompt_id} />
+        <div className="reveal">
+          <ReviewSection promptId={prompt.prompt_id} />
+        </div>
       </div>
     </div>
   )

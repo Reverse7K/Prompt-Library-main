@@ -32,7 +32,7 @@ export default async function NewPromptPage() {
       />
 
       <div className="relative max-w-2xl mx-auto px-6 py-12">
-        <h1 className="section-title text-4xl font-extrabold mb-8 text-ink">
+        <h1 className="animate-spring-up section-title text-4xl font-extrabold mb-8 text-ink">
           เพิ่ม Prompt ใหม่
         </h1>
 

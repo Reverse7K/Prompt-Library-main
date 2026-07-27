@@ -198,7 +198,7 @@ export default function PromptForm({
     'text-xs font-mono font-medium text-accent/80 tracking-widest mb-2 block uppercase'
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="stagger-children space-y-6">
       {error && (
         <div className="bg-accent2/10 border border-accent2/30 text-accent2 text-sm rounded-lg px-4 py-3">
           {error}
