@@ -7,6 +7,8 @@ export type Suggestion = {
   label: string
   /** ข้อความรองใต้ label เช่น @username หรือหมวดหมู่ */
   hint?: string
+  /** รูปกลมหน้ารายการ ใช้กับรายการที่เป็นคน จะได้แยกออกจากรายการอื่นตั้งแต่แรกเห็น */
+  avatarUrl?: string | null
 }
 
 const DEBOUNCE_MS = 250
@@ -184,16 +186,32 @@ export default function SearchBox({
                 aria-selected={i === activeIndex}
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => pick(item)}
-                className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-left transition-colors ${
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors ${
                   i === activeIndex ? 'bg-accent/10 text-accent' : 'text-ink-soft'
                 }`}
               >
-                <span className="w-full truncate text-sm">{item.label}</span>
-                {item.hint && (
-                  <span className="w-full truncate font-mono text-[11px] text-faint">
-                    {item.hint}
+                {/* มีรูป = เป็นคน ไม่มี = เป็นรายการอื่น รูปว่างก็ยังกันช่องไว้ให้แถวเรียงตรงกัน */}
+                {item.avatarUrl !== undefined && (
+                  <span className="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-line bg-base">
+                    {item.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="grid h-full w-full place-items-center bg-accent/10 font-display text-xs font-extrabold text-accent">
+                        {item.label.trim().charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </span>
                 )}
+
+                <span className="min-w-0 flex-1">
+                  <span className="block w-full truncate text-sm">{item.label}</span>
+                  {item.hint && (
+                    <span className="block w-full truncate font-mono text-[11px] text-faint">
+                      {item.hint}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           ))}

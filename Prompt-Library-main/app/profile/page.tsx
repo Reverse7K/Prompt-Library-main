@@ -33,7 +33,7 @@ export default async function ProfilePage() {
   const [createdResult, favoritesResult, profileResult] = await Promise.all([
     supabase.from('prompts').select('prompt_id, title, prompt_text, cover_image_url, cover_position, status, view_count, like_count, copy_count, categories(name), media_types(name)', { count: 'exact' }).eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
     supabase.from('favorites').select('favorite_id', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('profiles').select('display_name, avatar_url').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('username, display_name, avatar_url, bio, username_changed_at').eq('id', user.id).maybeSingle(),
   ])
 
   const profile = profileResult.data
@@ -51,19 +51,36 @@ export default async function ProfilePage() {
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12">
-      <section className="rounded-2xl border border-line bg-surface p-6 sm:p-8 mb-10 relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-52 h-52 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
-        <h1 className="section-title text-4xl font-extrabold text-ink mb-6">โปรไฟล์ของฉัน</h1>
+      <section className="rounded-2xl border border-line bg-surface p-6 sm:p-9 mb-10 relative overflow-hidden">
+        {/* แสงเรือง ๆ สองมุมให้การ์ดไม่แบน */}
+        <div className="absolute -top-24 -right-20 w-72 h-72 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent2/10 rounded-full blur-3xl pointer-events-none" />
 
-        <ProfileEditor
-          userId={user.id}
-          email={user.email ?? ''}
-          hasProfile={Boolean(profile)}
-          initialDisplayName={profile?.display_name ?? ''}
-          initialAvatarUrl={profile?.avatar_url ?? null}
-        />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
-          {stats.map((stat, index) => <div key={stat.label} className="rounded-xl border border-line bg-base/70 px-4 py-4"><Icon name={statIcons[index]} size={18} className={`${stat.color} mb-2`} /><p className={`text-2xl font-bold ${stat.color}`}>{stat.value.toLocaleString('th-TH')}</p><p className="text-xs text-muted font-mono mt-1">{stat.label}</p></div>)}
+        <div className="relative">
+          <h1 className="section-title text-4xl font-extrabold text-ink mb-7">โปรไฟล์ของฉัน</h1>
+
+          <ProfileEditor
+            userId={user.id}
+            email={user.email ?? ''}
+            username={profile?.username ?? ''}
+            usernameChangedAt={profile?.username_changed_at ?? null}
+            initialDisplayName={profile?.display_name ?? ''}
+            initialAvatarUrl={profile?.avatar_url ?? null}
+            initialBio={profile?.bio ?? ''}
+          />
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border border-line bg-base/70 px-4 py-4 transition-colors hover:border-accent/40"
+              >
+                <Icon name={statIcons[index]} size={18} className={`${stat.color} mb-2`} />
+                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value.toLocaleString('th-TH')}</p>
+                <p className="text-xs text-muted font-mono mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

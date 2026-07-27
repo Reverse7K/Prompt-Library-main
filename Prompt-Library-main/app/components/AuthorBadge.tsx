@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 type Author = {
   username?: string | null
   display_name?: string | null
@@ -22,8 +24,11 @@ export default function AuthorBadge({
   const name = author?.display_name?.trim() || author?.username || 'ไม่ระบุผู้โพสต์'
   const initial = name.charAt(0).toUpperCase()
 
-  return (
-    <div className="flex items-center gap-2.5">
+  // prompt ชุดตั้งต้นไม่มีเจ้าของ กดเข้าโปรไฟล์ไม่ได้
+  const profileHref = author?.username ? `/u/${encodeURIComponent(author.username)}` : null
+
+  const inner = (
+    <>
       <div
         className="shrink-0 overflow-hidden rounded-full border border-accent/40 bg-base"
         style={{ width: size, height: size }}
@@ -51,6 +56,17 @@ export default function AuthorBadge({
           </p>
         )}
       </div>
-    </div>
+    </>
+  )
+
+  if (!profileHref) return <div className="flex items-center gap-2.5">{inner}</div>
+
+  return (
+    <Link
+      href={profileHref}
+      className="flex items-center gap-2.5 rounded-lg transition-colors hover:text-accent [&_.text-ink]:hover:text-accent"
+    >
+      {inner}
+    </Link>
   )
 }

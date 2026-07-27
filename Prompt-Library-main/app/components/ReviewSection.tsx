@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import StarRating from '@/app/components/StarRating'
 import ConfirmDialog from '@/app/components/ConfirmDialog'
@@ -301,25 +302,49 @@ export default function ReviewSection({ promptId }: { promptId: string }) {
               'ผู้เยี่ยมชม'
           const avatar = hidden ? null : review.profiles?.avatar_url
           const editing = editingId === review.review_id
+          // กดดูโปรไฟล์ได้เฉพาะคนที่ระบุตัวตน ผู้เยี่ยมชมกับคนที่ซ่อนตัวตนไม่มีโปรไฟล์ให้ดู
+          const profileHref =
+            !hidden && review.profiles?.username
+              ? `/u/${encodeURIComponent(review.profiles.username)}`
+              : null
+
+          const avatarBox = (
+            <div className="mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-line bg-base">
+              {avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="grid h-full w-full place-items-center bg-accent/10 font-display text-xs font-extrabold text-accent">
+                  {hidden ? '?' : name.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+          )
 
           return (
             <div key={review.review_id} className="bg-surface border border-line rounded-lg p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-2.5">
-                  <div className="mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-line bg-base">
-                    {avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatar} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center bg-accent/10 font-display text-xs font-extrabold text-accent">
-                        {hidden ? '?' : name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  {profileHref ? (
+                    <Link href={profileHref} className="transition-opacity hover:opacity-80">
+                      {avatarBox}
+                    </Link>
+                  ) : (
+                    avatarBox
+                  )}
 
                   <div className="min-w-0">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium text-ink">{name}</span>
+                      {profileHref ? (
+                        <Link
+                          href={profileHref}
+                          className="text-sm font-medium text-ink transition-colors hover:text-accent"
+                        >
+                          {name}
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-medium text-ink">{name}</span>
+                      )}
                       {mine && (
                         <span className="rounded border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent">
                           คุณ

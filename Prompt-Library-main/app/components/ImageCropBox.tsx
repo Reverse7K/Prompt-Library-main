@@ -22,6 +22,7 @@ export default function ImageCropBox({
   onChange,
   aspect = 'aspect-video',
   compact = false,
+  round = false,
 }: {
   src: string
   value: CropValue
@@ -29,6 +30,8 @@ export default function ImageCropBox({
   aspect?: string
   /** ย่อส่วนควบคุมลง ใช้กับรูปตัวอย่างที่มีหลายรูปเรียงกัน */
   compact?: boolean
+  /** กรอบวงกลม ใช้กับรูปโปรไฟล์ที่แสดงผลเป็นวงกลม จะได้เห็นตรงกับของจริง */
+  round?: boolean
 }) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -85,7 +88,7 @@ export default function ImageCropBox({
         ref={frameRef}
         onPointerDown={handlePointerDown}
         onWheel={handleWheel}
-        className={`relative ${aspect} w-full overflow-hidden rounded-lg border transition-colors ${
+        className={`relative ${aspect} w-full overflow-hidden ${round ? 'rounded-full' : 'rounded-lg'} border transition-colors ${
           dragging ? 'border-accent cursor-grabbing' : 'border-line cursor-grab hover:border-accent/50'
         }`}
       >
