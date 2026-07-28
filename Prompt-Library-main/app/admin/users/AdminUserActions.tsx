@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import ConfirmDialog from '@/app/components/ConfirmDialog'
 import SelectMenu from '@/app/components/SelectMenu'
+import BanDialog from '@/app/admin/users/BanDialog'
 import { showToast } from '@/app/components/Toast'
 
 type AdminUserActionsProps = {
@@ -70,11 +70,12 @@ export default function AdminUserActions({
     router.refresh()
   }
 
-  async function handleBan(reason: string) {
+  async function handleBan({ days, reason }: { days: number | null; reason: string }) {
     setBusy(true)
     const { error } = await supabase.rpc('ban_user', {
       target_user_id: userId,
-      reason: reason.trim() || null,
+      reason: reason || null,
+      days,
     })
     setBusy(false)
 
@@ -84,7 +85,7 @@ export default function AdminUserActions({
     }
 
     setAskBan(false)
-    showToast('แบนผู้ใช้แล้ว')
+    showToast(days === null ? 'แบนถาวรแล้ว' : `แบน ${days} วันแล้ว`)
     router.refresh()
   }
 
@@ -114,14 +115,10 @@ export default function AdminUserActions({
         {isBanned ? 'ปลดแบน' : 'แบน'}
       </button>
 
-      <ConfirmDialog
+      <BanDialog
         open={askBan}
         busy={busy}
-        title={`แบน${displayName ? ` ${who}` : 'ผู้ใช้รายนี้'}?`}
-        description="ผู้ใช้จะเข้าใช้งานไม่ได้จนกว่าจะปลดแบน ปลดคืนได้ภายหลัง"
-        inputLabel="เหตุผล (ไม่บังคับ)"
-        inputPlaceholder="เช่น โพสต์เนื้อหาไม่เหมาะสม"
-        confirmLabel="แบนผู้ใช้"
+        who={who}
         onConfirm={handleBan}
         onCancel={() => setAskBan(false)}
       />

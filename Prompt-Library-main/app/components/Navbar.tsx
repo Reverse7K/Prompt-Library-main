@@ -35,6 +35,9 @@ export default function Navbar() {
     display_name: string | null
     avatar_url: string | null
     role: string | null
+    is_banned?: boolean | null
+    banned_reason?: string | null
+    banned_until?: string | null
   } | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -46,7 +49,7 @@ export default function Navbar() {
     async function loadProfile(userId: string, userEmail: string | null) {
       const { data } = await supabase
         .from('profiles')
-        .select('username, display_name, avatar_url, role')
+        .select('username, display_name, avatar_url, role, is_banned, banned_reason, banned_until')
         .eq('id', userId)
         .maybeSingle()
       // รูปในฐานข้อมูลมาก่อน ถ้าไม่มีค่อยใช้รูปสำรองที่เก็บไว้ในเครื่อง
@@ -55,6 +58,9 @@ export default function Navbar() {
         display_name: data?.display_name ?? null,
         avatar_url: data?.avatar_url ?? getLocalAvatar(userId),
         role: data?.role ?? null,
+        is_banned: data?.is_banned ?? null,
+        banned_reason: data?.banned_reason ?? null,
+        banned_until: data?.banned_until ?? null,
       }
       setProfile(next)
       if (userEmail) writeProfileCache({ email: userEmail, ...next })
@@ -180,6 +186,13 @@ export default function Navbar() {
       transition: `opacity ${move}, transform ${move}, background-color 150ms ease, color 150ms ease`,
     }
   }
+
+  /*
+    โดนแบนอยู่จริงตอนนี้ไหม ใช้เกณฑ์เดียวกับ is_user_banned() ในฐานข้อมูล
+    is_banned ยังค้างเป็น true หลังหมดกำหนด เพราะไม่มีใครไปไล่ล้างให้ ตัวตัดสินจึงเป็น banned_until
+  */
+  const bannedUntil = profile?.banned_until ? new Date(profile.banned_until) : null
+  const banned = Boolean(profile?.is_banned) && (!bannedUntil || bannedUntil > new Date())
 
   const navIcon = (href: string) => {
     if (href === '/home') return <Icon name="home" size={14} />
@@ -423,6 +436,28 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/*
+        แถบแจ้งว่าโดนแบน ต้องบอกให้ชัดว่าทำอะไรไม่ได้และเพราะอะไร
+        ไม่งั้นผู้ใช้จะเจอแค่ "บันทึกไม่สำเร็จ" ลอย ๆ จาก RLS แล้วไม่รู้ว่าเกิดอะไรขึ้น
+      */}
+      {banned && (
+        <div className="border-t border-accent2/40 bg-accent2/10 px-4 py-2 text-center">
+          <p className="font-mono text-xs text-accent2">
+            บัญชีนี้ถูกระงับ
+            {profile?.banned_until
+              ? ` ถึง ${new Date(profile.banned_until).toLocaleString('th-TH', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}`
+              : 'ถาวร'}
+            {profile?.banned_reason ? ` · เหตุผล: ${profile.banned_reason}` : ''}
+          </p>
+          <p className="mt-0.5 font-mono text-[11px] text-accent2/70">
+            ระหว่างนี้โพสต์ prompt เขียนรีวิว กดถูกใจ และแก้โปรไฟล์ไม่ได้
+          </p>
+        </div>
+      )}
 
       {/* เมนูมือถือ: แถวที่ 2 แบบเลื่อนได้ เฉพาะจอเล็กกว่า lg */}
       <div className="lg:hidden border-t border-line px-6 py-2 flex gap-1 overflow-x-auto">

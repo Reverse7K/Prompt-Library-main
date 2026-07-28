@@ -12,9 +12,10 @@ export default async function AdminUsersPage({
 
   let query = supabase
     .from('profiles')
-    .select('id, username, display_name, role, is_banned, banned_reason, created_at', {
-      count: 'exact',
-    })
+    .select(
+      'id, username, display_name, role, is_banned, banned_reason, banned_until, created_at',
+      { count: 'exact' }
+    )
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -63,12 +64,36 @@ export default async function AdminUsersPage({
                   <p className="text-faint text-xs font-mono">@{u.username}</p>
                 </td>
                 <td className="px-4 py-3">
-                  {u.is_banned ? (
-                    <span
-                      className="text-xs font-mono px-2 py-0.5 rounded-full bg-accent2/10 text-accent2"
-                      title={u.banned_reason ?? ''}
-                    >
-                      ถูกแบน
+                  {/*
+                    is_banned ยังเป็น true หลังหมดกำหนด เพราะไม่มีใครไปไล่ล้างค่าให้
+                    ตัวตัดสินจริงคือ banned_until เทียบกับตอนนี้ ซึ่งตรงกับที่ is_user_banned() ในฐานข้อมูลใช้
+                  */}
+                  {u.is_banned && (!u.banned_until || new Date(u.banned_until) > new Date()) ? (
+                    <div className="space-y-1">
+                      <span
+                        className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-accent2/10 text-accent2"
+                        title={u.banned_reason ?? ''}
+                      >
+                        {u.banned_until ? 'ถูกแบนชั่วคราว' : 'ถูกแบนถาวร'}
+                      </span>
+                      {u.banned_until && (
+                        <p className="text-[11px] font-mono text-faint">
+                          ถึง{' '}
+                          {new Date(u.banned_until).toLocaleString('th-TH', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </p>
+                      )}
+                      {u.banned_reason && (
+                        <p className="max-w-[200px] truncate text-[11px] text-muted" title={u.banned_reason}>
+                          {u.banned_reason}
+                        </p>
+                      )}
+                    </div>
+                  ) : u.is_banned ? (
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-line text-muted">
+                      แบนหมดอายุแล้ว
                     </span>
                   ) : (
                     <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300">
