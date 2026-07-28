@@ -46,10 +46,11 @@ Next.js 16 · React 19 · Supabase · Tailwind CSS 4 · TypeScript
 | ฟีเจอร์ | รายละเอียด |
 | --- | --- |
 | 🔍 **ค้นหา** | ค้นจากชื่อ คำอธิบาย และเนื้อ prompt แบบจับคำบางส่วน พร้อมรายการแนะนำที่มีทั้ง prompt และผู้ใช้ |
-| 📋 **คัดลอก** | กดปุ่มเดียวได้ prompt เต็ม ๆ ยอดคัดลอกนับเป็น "จำนวนคน" ไม่ใช่จำนวนครั้ง |
+| 📋 **คัดลอก** | กดปุ่มเดียวได้ prompt เต็ม ๆ **ไม่ต้องล็อกอิน** ยอดคัดลอกนับเป็น "จำนวนคน" ไม่ใช่จำนวนครั้ง |
 | ❤️ **รายการโปรด** | บันทึก prompt ที่ชอบไว้กลับมาดูภายหลัง |
 | ⭐ **รีวิว** | ให้คะแนน 1–5 ดาว เขียนคอมเมนต์ เลือกแสดงตัวตนหรือไม่ระบุตัวตนก็ได้ ผู้เยี่ยมชมที่ไม่ล็อกอินก็รีวิวได้ |
 | 🗂️ **หมวดหมู่ / ประเภทสื่อ / โมเดล AI** | กรอง prompt ได้หลายมิติ |
+| 👥 **ผู้เยี่ยมชม (guest)** | ไม่ต้องสมัครก็ดู ค้นหา คัดลอก (นับยอดให้ด้วย) และรีวิวได้ |
 | 👤 **โปรไฟล์** | ตั้งรูป (ครอปเองได้) ชื่อเล่น ไบโอ และเปลี่ยน username ได้ทุก 14 วัน |
 | 🌐 **โปรไฟล์สาธารณะ** | `/u/[username]` ดู prompt ของผู้ใช้คนอื่นได้ ไม่แสดงอีเมล |
 | 🌗 **ธีมสว่าง/มืด** | จำค่าไว้ในเครื่อง |
@@ -132,7 +133,7 @@ Schema อยู่ใน `prisma/schema.prisma` (introspect มาจาก Sup
 | `categories` / `media_types` / `ai_models` | ข้อมูลอ้างอิงสำหรับกรอง |
 | `reviews` | รีวิวและคะแนน รองรับทั้งสมาชิกและผู้เยี่ยมชม |
 | `favorites` | รายการโปรด |
-| `prompt_copies` | คู่ผู้ใช้–prompt ที่เคยกดคัดลอก ใช้กันนับซ้ำอย่างเดียว |
+| `prompt_copies` | ใครเคยคัดลอก prompt ไหน ใช้กันนับซ้ำอย่างเดียว — สมาชิกยึด `user_id` ผู้เยี่ยมชมยึด `guest_id` |
 | `prompt_examples` / `prompt_tags` / `prompt_ai_models` | ตารางเชื่อมของ prompt |
 | `profanity_words` | ลิสต์คำต้องห้าม sync มาจาก `lib/profanity.ts` |
 
@@ -152,6 +153,7 @@ Schema อยู่ใน `prisma/schema.prisma` (introspect มาจาก Sup
 | `add-username-change-rule.sql` | กติกาเปลี่ยน username ทุก 14 วัน |
 | `add-profanity-guard.sql` | ตัวกรองคำหยาบระดับฐานข้อมูล |
 | `add-ban-enforcement.sql` | ระบบแบนที่บังคับใช้จริง |
+| `add-guest-copy-count.sql` | ให้ผู้เยี่ยมชมที่ไม่ได้ล็อกอินคัดลอกแล้วนับยอดได้ |
 
 > 💡 **บทเรียนจาก `fix-prompt-copies-pk.sql`** — ตอนแรกตั้ง primary key เป็น `(user_id, prompt_id)` ซึ่งเข้าเงื่อนไขที่ PostgREST ใช้เดาความสัมพันธ์ many-to-many อัตโนมัติ ทำให้ `prompts` กับ `profiles` มีเส้นทางเชื่อมสองทาง แล้ว query ที่ embed `profiles(...)` พังทั้งเว็บด้วย `PGRST201` — ตารางเชื่อมในโปรเจกต์นี้จึงต้องมี primary key ของตัวเองเสมอ แล้วกันซ้ำด้วย `unique` แทน
 
@@ -178,10 +180,12 @@ lib/
 ├── supabase/              # client ฝั่ง browser และ server
 ├── profanity.ts           # ตัวกรองคำหยาบ (ลิสต์คำอยู่ที่นี่ที่เดียว)
 ├── promptSearch.ts        # เงื่อนไขค้นหา ใช้ร่วมกันทุกที่
-├── recordCopy.ts          # กติกานับยอดคัดลอก
+├── recordCopy.ts          # กติกานับยอดคัดลอก (สมาชิก + ผู้เยี่ยมชม)
+├── guestId.ts             # id ประจำเบราว์เซอร์ของผู้เยี่ยมชม ใช้กันนับซ้ำ
 ├── profileCache.ts        # จำโปรไฟล์ไว้กันรูปกระพริบตอนรีเฟรช
 ├── localAvatar.ts         # รูปโปรไฟล์สำรองในเครื่อง
-└── prepareImageUpload.ts
+├── prepareImageUpload.ts
+└── prisma.ts              # Prisma client (ใช้เฉพาะงานที่ต้องคุยกับ DB ตรง ๆ)
 
 prisma/
 ├── schema.prisma
@@ -208,6 +212,20 @@ scripts/
 - หมดกำหนดแล้วกลับมาใช้งานได้เอง ไม่ต้องรอแอดมินมาปลด
 - บังคับด้วย **restrictive RLS policy** บนทุกตารางที่ผู้ใช้เขียนได้ — ต้องเป็น restrictive เพราะ policy แบบ permissive จะ OR กัน ต่อให้แก้อันหนึ่ง อีกอันก็ปล่อยผ่านอยู่ดี
 - คนโดนแบน **ยังอ่านเว็บได้ปกติ** แค่เขียนอะไรไม่ได้
+
+### 👥 ผู้เยี่ยมชม (guest)
+
+คนที่ไม่ได้ล็อกอินไม่มีแถวใน `profiles` จึงไม่มี `role` ให้ใส่ — "guest" ในที่นี้คือสถานะโดยปริยายของคนที่ไม่มี session ซึ่งตรงกับ role `anon` ของ Supabase ที่ RLS ใช้ตัดสินอยู่แล้ว
+
+สิ่งที่ guest ทำได้:
+
+- ดูและค้นหา prompt สาธารณะทั้งหมด
+- **คัดลอก prompt และยอดถูกนับให้** — กันซ้ำด้วย id สุ่มที่เก็บใน localStorage (`lib/guestId.ts`) ส่งไปเป็น `guest_id`
+- เขียนรีวิวได้ โดยระบุชื่อเองหรือใช้ "ผู้เยี่ยมชม"
+
+สิ่งที่ทำไม่ได้: โพสต์ prompt, กดถูกใจ, มีโปรไฟล์
+
+> ⚠️ **ทำไมต้อง partial unique index** — ตอนแรกตารางกันซ้ำด้วย `unique (user_id, prompt_id)` ซึ่งใช้กับ guest ไม่ได้เลย เพราะ `user_id` เป็น null ทุกแถว และใน SQL ค่า null ไม่เท่ากับ null จึงไม่นับว่าซ้ำ ต้องแยกเป็น partial unique index สองชุด (`...user_unique` / `...guest_unique`)
 
 ### 🔑 กติกา username
 
@@ -284,10 +302,11 @@ What this project takes seriously:
 | Feature | Details |
 | --- | --- |
 | 🔍 **Search** | Matches title, description, and prompt body with partial-word support, plus live suggestions covering both prompts and users |
-| 📋 **Copy** | One click copies the full prompt. The counter tracks *unique people*, not clicks |
+| 📋 **Copy** | One click copies the full prompt, **no sign-in required**. The counter tracks *unique people*, not clicks |
 | ❤️ **Favourites** | Save prompts for later |
 | ⭐ **Reviews** | 1–5 star ratings with comments, optionally anonymous. Guests can review without signing in |
 | 🗂️ **Categories / media types / AI models** | Filter prompts along several dimensions |
+| 👥 **Guests** | Browse, search, copy (counted), and review without an account |
 | 👤 **Profile** | Avatar with built-in cropping, display name, bio, and a username changeable every 14 days |
 | 🌐 **Public profiles** | `/u/[username]` shows someone's prompts — never their email |
 | 🌗 **Light / dark theme** | Remembered locally |
@@ -370,7 +389,7 @@ The schema lives in `prisma/schema.prisma`, introspected from Supabase via `npm 
 | `categories` / `media_types` / `ai_models` | Reference data used for filtering |
 | `reviews` | Ratings and comments from both members and guests |
 | `favorites` | Saved prompts |
-| `prompt_copies` | User–prompt pairs that have been copied, used purely for deduplication |
+| `prompt_copies` | Who copied which prompt, used purely for deduplication — members keyed by `user_id`, guests by `guest_id` |
 | `prompt_examples` / `prompt_tags` / `prompt_ai_models` | Prompt join tables |
 | `profanity_words` | Banned word list, synced from `lib/profanity.ts` |
 
@@ -390,6 +409,7 @@ Run these in order in the Supabase SQL Editor (or via `psql`):
 | `add-username-change-rule.sql` | 14-day username change rule |
 | `add-profanity-guard.sql` | Database-level profanity filter |
 | `add-ban-enforcement.sql` | Ban system that is actually enforced |
+| `add-guest-copy-count.sql` | Lets signed-out visitors copy prompts and have it counted |
 
 > 💡 **Lesson from `fix-prompt-copies-pk.sql`** — the table originally used `(user_id, prompt_id)` as its primary key, which is exactly the shape PostgREST uses to infer a many-to-many relationship. That gave `prompts` and `profiles` two relationship paths, so every query embedding `profiles(...)` failed site-wide with `PGRST201`. Join tables here must always carry their own surrogate primary key and rely on a `unique` constraint for deduplication.
 
@@ -416,10 +436,12 @@ lib/
 ├── supabase/              # Browser and server clients
 ├── profanity.ts           # Profanity filter (single source for the word lists)
 ├── promptSearch.ts        # Shared search predicate
-├── recordCopy.ts          # Copy-count rules
+├── recordCopy.ts          # Copy-count rules (members + guests)
+├── guestId.ts             # Per-browser id for signed-out visitors, used for deduplication
 ├── profileCache.ts        # Caches the profile to stop avatar flicker on refresh
 ├── localAvatar.ts         # Local avatar fallback
-└── prepareImageUpload.ts
+├── prepareImageUpload.ts
+└── prisma.ts              # Prisma client, for the few paths that talk to the DB directly
 
 prisma/
 ├── schema.prisma
@@ -446,6 +468,20 @@ Applied to **display names, usernames, bios, and review comments**.
 - Temporary bans expire on their own — no admin action needed
 - Enforced through **restrictive RLS policies** on every user-writable table. They must be restrictive: permissive policies are OR'd together, so fixing one still leaves the others letting writes through
 - Banned users **can still read the site**, they simply cannot write
+
+### 👥 Guests
+
+Signed-out visitors have no row in `profiles`, so there is no `role` to assign them. "Guest" here is simply the absence of a session, which maps to Supabase's `anon` role that RLS already keys off.
+
+What a guest can do:
+
+- Browse and search every public prompt
+- **Copy a prompt and have it counted** — deduplicated by a random id kept in localStorage (`lib/guestId.ts`) and sent as `guest_id`
+- Leave a review under a name of their choosing, or as "ผู้เยี่ยมชม"
+
+What they cannot do: publish prompts, like, or own a profile.
+
+> ⚠️ **Why partial unique indexes** — the table originally deduplicated with `unique (user_id, prompt_id)`, which does nothing for guests: their `user_id` is always null, and in SQL null never equals null, so no two rows ever collide. It now uses two partial unique indexes instead (`...user_unique` / `...guest_unique`).
 
 ### 🔑 Username rules
 
