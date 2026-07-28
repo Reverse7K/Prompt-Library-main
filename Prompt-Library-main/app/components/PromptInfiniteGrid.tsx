@@ -152,7 +152,7 @@ export default function PromptInfiniteGrid({
 
   if (initializing) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="isolate grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
@@ -173,7 +173,8 @@ export default function PromptInfiniteGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* isolate = การ์ดที่ยกตัวขึ้นตอน hover (z-10) จะยกได้แค่ในกริดนี้ ไม่ทะลุขึ้นไปทับเมนู/รายการแนะนำข้างบน */}
+      <div className="isolate grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* +2 คือให้การ์ดเริ่มไล่หลังหัวข้อกับตัวกรองของหน้า, %PAGE_SIZE คือรีเซ็ตจังหวะทุกหน้าที่โหลดเพิ่ม */}
         {prompts.map((prompt, i) => (
           <PromptCard key={prompt.prompt_id} prompt={prompt} index={(i % PAGE_SIZE) + 2} />

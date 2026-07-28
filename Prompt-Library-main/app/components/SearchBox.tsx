@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export type Suggestion = {
   id: string
@@ -44,6 +45,11 @@ export default function SearchBox({
 
   const listboxId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+
+  // portal ใช้ได้เฉพาะฝั่ง client
+  const [mounted, setMounted] = useState(false)
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null)
   // นับรอบการค้นไว้กันผลลัพธ์เก่ามาทับผลใหม่ เวลาพิมพ์เร็วแล้ว response สลับลำดับกัน
   const runIdRef = useRef(0)
 
@@ -80,13 +86,53 @@ export default function SearchBox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword])
 
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
+  // portal ต้องรอให้ mount ฝั่ง client ก่อน ตอน render บน server ยังไม่มี document.body ให้แขวน
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), [])
+
+  /*
+    วางรายการแนะนำด้วยพิกัดจริงบนจอ แล้วส่งไปแขวนที่ document.body ผ่าน portal
+
+    เดิมใช้ absolute ซ้อนอยู่ในตัว component ซึ่งพังสองแบบ เหมือนที่ SelectMenu เคยเจอ
+    1) element แม่ที่มี transform (เช่นการ์ดที่เด้งขึ้นมา หรือ animate-spring-up) สร้าง stacking context ใหม่
+       z-index ของรายการแนะนำจึงสู้พี่น้องที่อยู่ถัดไปไม่ได้ กลายเป็นมุดลงไปอยู่ใต้การ์ด
+    2) หน้าที่ตั้ง overflow-hidden ไว้ที่ชั้นนอก (เช่น /home, หน้ารายละเอียด prompt) จะตัดรายการหายไปเลย
+  */
+  const place = useCallback(() => {
+    const el = rootRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setRect({ top: r.bottom + 8, left: r.left, width: r.width })
   }, [])
+
+  useLayoutEffect(() => {
+    if (open) place()
+  }, [open, place])
+
+  useEffect(() => {
+    if (!open) return
+
+    function onDown(e: MouseEvent) {
+      const target = e.target as Node
+      if (rootRef.current?.contains(target)) return
+      // รายการอยู่คนละที่ใน DOM แล้ว ต้องเช็คแยก ไม่งั้นกดเลือกปุ๊บเมนูปิดก่อนจนกดไม่ติด
+      if (listRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    // ใช้พิกัดคงที่บนจอ เลื่อนหน้าหรือย่อขยายแล้วต้องขยับตาม
+    function onReflow() {
+      place()
+    }
+
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('scroll', onReflow, true)
+    window.addEventListener('resize', onReflow)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      window.removeEventListener('scroll', onReflow, true)
+      window.removeEventListener('resize', onReflow)
+    }
+  }, [open, place])
 
   function submit(kw: string) {
     setOpen(false)
@@ -169,12 +215,17 @@ export default function SearchBox({
         </button>
       )}
 
-      {open && (
-        <ul
-          id={listboxId}
-          role="listbox"
-          className="animate-menu-in absolute left-0 top-full z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]"
-        >
+      {mounted &&
+        open &&
+        rect &&
+        createPortal(
+          <ul
+            ref={listRef}
+            id={listboxId}
+            role="listbox"
+            style={{ position: 'fixed', top: rect.top, left: rect.left, width: rect.width }}
+            className="animate-menu-in z-[150] max-h-72 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]"
+          >
           {loading && (
             <li className="px-3 py-2 font-mono text-xs text-faint">กำลังค้นหา...</li>
           )}
@@ -215,8 +266,9 @@ export default function SearchBox({
               </button>
             </li>
           ))}
-        </ul>
-      )}
+          </ul>,
+          document.body
+        )}
     </div>
   )
 }
