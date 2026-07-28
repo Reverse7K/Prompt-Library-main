@@ -9,13 +9,8 @@ import { promptSearchFilter } from '@/lib/promptSearch'
 const USER_PREFIX = 'user:'
 const PROMPT_PREFIX = 'prompt:'
 
-export default function SearchBar({
-  initialQuery = '',
-  compact = false,
-}: {
-  initialQuery?: string
-  compact?: boolean
-}) {
+/** ความกว้างมาจาก element แม่เสมอ ตัวมันเองยืดเต็มที่ที่ได้มา */
+export default function SearchBar({ initialQuery = '' }: { initialQuery?: string }) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -71,7 +66,8 @@ export default function SearchBar({
     <SearchBox
       value={initialQuery}
       placeholder="ค้นหา prompt..."
-      className={compact ? 'w-40 sm:w-56' : 'w-full'}
+      // compact = อยู่บน navbar ให้กว้างเท่าที่ช่องว่างเหลือ ตัวแม่เป็นคนคุมความกว้าง
+      className="w-full"
       fetchSuggestions={fetchSuggestions}
       // เลือกรายการแนะนำ = รู้อยู่แล้วว่าจะเอาอันไหน พาไปหน้านั้นเลยไม่ต้องผ่านหน้าผลค้นหา
       onPick={(item) =>
