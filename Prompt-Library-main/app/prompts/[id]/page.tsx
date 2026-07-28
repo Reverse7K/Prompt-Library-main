@@ -61,7 +61,8 @@ export default async function PromptDetailPage({
           backgroundSize: '48px 48px',
         }}
       />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent2/15 rounded-full blur-[120px] pointer-events-none glow-blob" />
+      {/* หน้านี้เน้นอ่านเนื้อหา ใช้เส้นทางที่ช้าที่สุดและก้อนเดียวพอ ไม่ให้ดึงสายตาไปจาก prompt */}
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent2/15 rounded-full blur-[120px] pointer-events-none animate-drift-c glow-blob" />
 
       <ViewTracker promptId={prompt.prompt_id} />
 

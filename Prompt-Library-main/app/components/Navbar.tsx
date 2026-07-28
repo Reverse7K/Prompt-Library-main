@@ -353,7 +353,11 @@ export default function Navbar() {
                       <p className="truncate text-sm font-semibold text-ink">
                         {profile?.display_name || 'ยังไม่ได้ตั้งชื่อเล่น'}
                       </p>
-                      <p className="truncate text-xs font-mono text-faint mt-0.5">{email}</p>
+                      {/* โชว์ @username แทนอีเมล — เผลอแชร์จอแล้วอีเมลไม่ติดไปด้วย
+                          ถ้ายังโหลดโปรไฟล์ไม่เสร็จค่อยใช้อีเมลไปพลางก่อน จะได้ไม่เป็นบรรทัดว่าง */}
+                      <p className="truncate text-xs font-mono text-faint mt-0.5">
+                        {profile?.username ? `@${profile.username}` : email}
+                      </p>
                     </div>
 
                     {profile?.role === 'admin' && (
