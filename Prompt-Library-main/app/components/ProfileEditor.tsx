@@ -8,6 +8,7 @@ import Icon from '@/app/components/Icon'
 import ImageCropBox, { DEFAULT_CROP, type CropValue } from '@/app/components/ImageCropBox'
 import ConfirmDialog from '@/app/components/ConfirmDialog'
 import { clearLocalAvatar, getLocalAvatar, setLocalAvatar } from '@/lib/localAvatar'
+import { checkProfanity } from '@/lib/profanity'
 
 /** ยิงเมื่อบันทึกโปรไฟล์สำเร็จ เพื่อให้ Navbar โหลดรูป/ชื่อใหม่ทันทีโดยไม่ต้องรีโหลดหน้า */
 export const PROFILE_UPDATED = 'profile-updated'
@@ -276,6 +277,17 @@ export default function ProfileEditor({
 
   /** ด่านแรกตอนกดบันทึก — ถ้าแตะชื่อผู้ใช้ต้องผ่าน pop-up ยืนยันก่อน เพราะเปลี่ยนแล้วรออีก 14 วัน */
   function handleSaveClick() {
+    // กันคำไม่สุภาพตั้งแต่ก่อนยิง ผู้ใช้จะได้รู้ทันทีว่าติดช่องไหน
+    // (ด่านจริงอยู่ที่ trigger ฝั่งฐานข้อมูล ตรงนี้แค่บอกให้เร็วขึ้น)
+    const dirtyWord =
+      checkProfanity(displayName, { label: 'ชื่อเล่น', checkReserved: true }) ??
+      checkProfanity(username, { label: 'ชื่อผู้ใช้', checkReserved: true }) ??
+      checkProfanity(bio, { label: 'ไบโอ' })
+    if (dirtyWord) {
+      showToast(dirtyWord, 'error')
+      return
+    }
+
     if (usernameChanged) {
       const problem = validateUsername(username)
       if (problem) {

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import StarRating from '@/app/components/StarRating'
 import ConfirmDialog from '@/app/components/ConfirmDialog'
 import { showToast } from '@/app/components/Toast'
+import { checkProfanity } from '@/lib/profanity'
 
 type Review = {
   review_id: string
@@ -101,6 +102,15 @@ export default function ReviewSection({ promptId }: { promptId: string }) {
       return
     }
 
+    // ด่านจริงอยู่ที่ trigger ฝั่งฐานข้อมูล ตรงนี้ไว้บอกผู้ใช้ก่อนเสียเวลาส่ง
+    const dirtyWord =
+      checkProfanity(comment, { label: 'ข้อความรีวิว' }) ??
+      checkProfanity(guestName, { label: 'ชื่อผู้เขียน', checkReserved: true })
+    if (dirtyWord) {
+      setError(dirtyWord)
+      return
+    }
+
     setSubmitting(true)
     try {
       const {
@@ -151,6 +161,12 @@ export default function ReviewSection({ promptId }: { promptId: string }) {
   async function saveEdit(reviewId: string) {
     if (editRating === 0) {
       showToast('กรุณาให้คะแนนอย่างน้อย 1 ดาว', 'error')
+      return
+    }
+
+    const dirtyWord = checkProfanity(editComment, { label: 'ข้อความรีวิว' })
+    if (dirtyWord) {
+      showToast(dirtyWord, 'error')
       return
     }
 
