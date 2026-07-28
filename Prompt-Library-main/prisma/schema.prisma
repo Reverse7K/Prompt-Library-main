@@ -695,13 +695,16 @@ model tags {
 /// ถ้าตั้ง PK เป็น (user_id, prompt_id) PostgREST จะมองว่าเป็นตารางเชื่อม many-to-many
 /// แล้วการ embed profiles(...) จาก prompts จะกำกวมจนหน้ารายละเอียดพัง
 model prompt_copies {
-  copy_id   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_id   String   @db.Uuid
-  prompt_id String   @db.Uuid
-  prompts   prompts  @relation(fields: [prompt_id], references: [prompt_id], onDelete: Cascade, onUpdate: NoAction)
-  profiles  profiles @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  copy_id   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// สมาชิกกันซ้ำด้วย user_id ส่วนผู้เยี่ยมชมที่ไม่ได้ล็อกอินใช้ guest_id แทน — ต้องมีอย่างใดอย่างหนึ่ง
+  user_id   String?   @db.Uuid
+  guest_id  String?
+  prompt_id String    @db.Uuid
+  prompts   prompts   @relation(fields: [prompt_id], references: [prompt_id], onDelete: Cascade, onUpdate: NoAction)
+  profiles  profiles? @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([user_id, prompt_id])
+  /// กันซ้ำด้วย partial unique index สองชุด (prompt_copies_user_unique / prompt_copies_guest_unique)
+  /// เขียนเป็น @@unique ที่นี่ไม่ได้ เพราะ null ไม่เท่ากับ null จึงกัน guest ไม่ได้
   @@index([prompt_id], map: "idx_prompt_copies_prompt")
   @@schema("public")
 }

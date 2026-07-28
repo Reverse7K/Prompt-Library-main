@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from '@/app/components/Toast'
 import { recordCopy } from '@/lib/recordCopy'
-import type { User } from '@supabase/supabase-js'
 
 type CopyPromptButtonProps = {
   promptId: string
@@ -20,23 +19,14 @@ export default function CopyPromptButton({
 }: CopyPromptButtonProps) {
   const [copied, setCopied] = useState(false)
   const [copyCount, setCopyCount] = useState(initialCopyCount)
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }: { data: { user: User | null } }) => {
-      setIsLoggedIn(Boolean(user))
-    })
-  }, [supabase])
-
+  /*
+    ผู้เยี่ยมชมที่ไม่ได้ล็อกอินคัดลอกได้เลย ไม่ต้องเด้งไปหน้า login อีกแล้ว
+    ยอดก็นับให้ด้วย โดย recordCopy กันซ้ำด้วย id ประจำเบราว์เซอร์แทน user_id
+  */
   async function handleCopy() {
-    // ยังไม่ login -> พาไปหน้า login แทนการคัดลอก
-    if (!isLoggedIn) {
-      router.push(`/login?next=/prompts/${promptId}`)
-      return
-    }
-
     try {
       await navigator.clipboard.writeText(promptText)
       setCopied(true)
@@ -55,8 +45,6 @@ export default function CopyPromptButton({
     }
   }
 
-  const locked = isLoggedIn === false
-
   return (
     <div>
       <button
@@ -64,8 +52,6 @@ export default function CopyPromptButton({
         className={`group w-full py-3 rounded-lg font-mono text-sm font-medium border transition-all flex items-center justify-center gap-2 ${
           copied
             ? 'bg-emerald-500/10 text-emerald-300 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)]'
-            : locked
-            ? 'bg-surface text-muted border-line hover:border-accent/40 hover:text-accent'
             : 'bg-accent/10 text-accent border-accent/60 hover:bg-accent/20 hover:border-accent hover:shadow-[0_0_20px_rgba(0,229,255,0.3)]'
         }`}
       >
@@ -75,14 +61,6 @@ export default function CopyPromptButton({
               <path d="M20 6 9 17l-5-5" />
             </svg>
             คัดลอกแล้ว
-          </>
-        ) : locked ? (
-          <>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="4" y="10" width="16" height="10" rx="2" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </svg>
-            เข้าสู่ระบบเพื่อคัดลอก
           </>
         ) : (
           <>
