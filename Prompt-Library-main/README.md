@@ -64,6 +64,7 @@ Next.js 16 · React 19 · Supabase · Tailwind CSS 4 · TypeScript
 | 👥 **จัดการผู้ใช้** | เปลี่ยนสิทธิ์ แบน/ปลดแบน กรองตามสิทธิ์และสถานะ |
 | 💬 **จัดการรีวิว** | กรองตามคะแนนและประเภทผู้รีวิว ค้นหาจากข้อความหรือชื่อ prompt |
 | 🚫 **ระบบแบน** | เลือก 1–3650 วัน หรือถาวร พร้อมเหตุผลที่ผู้ใช้จะเห็น หมดกำหนดแล้วปลดอัตโนมัติ |
+| 🗂️ **จัดการหมวดหมู่ & ข้อมูลอ้างอิง** | เพิ่ม/แก้/ลบ categories, media types, AI models, tags ผ่านหน้าเว็บ (`/admin/catalog`) แทนการแก้ SQL ตรง ๆ |
 
 ## เทคโนโลยีที่ใช้
 
@@ -154,6 +155,7 @@ Schema อยู่ใน `prisma/schema.prisma` (introspect มาจาก Sup
 | `add-profanity-guard.sql` | ตัวกรองคำหยาบระดับฐานข้อมูล |
 | `add-ban-enforcement.sql` | ระบบแบนที่บังคับใช้จริง |
 | `add-guest-copy-count.sql` | ให้ผู้เยี่ยมชมที่ไม่ได้ล็อกอินคัดลอกแล้วนับยอดได้ |
+| `add-admin-catalog-policies.sql` | เปิด insert/update/delete policy ให้แอดมินบน `categories` / `media_types` / `ai_models` / `tags` (ก่อนหน้านี้แก้ได้แต่ผ่าน SQL ตรง ๆ) |
 
 > 💡 **บทเรียนจาก `fix-prompt-copies-pk.sql`** — ตอนแรกตั้ง primary key เป็น `(user_id, prompt_id)` ซึ่งเข้าเงื่อนไขที่ PostgREST ใช้เดาความสัมพันธ์ many-to-many อัตโนมัติ ทำให้ `prompts` กับ `profiles` มีเส้นทางเชื่อมสองทาง แล้ว query ที่ embed `profiles(...)` พังทั้งเว็บด้วย `PGRST201` — ตารางเชื่อมในโปรเจกต์นี้จึงต้องมี primary key ของตัวเองเสมอ แล้วกันซ้ำด้วย `unique` แทน
 
@@ -168,19 +170,22 @@ app/
 ├── favorites/             # รายการโปรด
 ├── profile/               # โปรไฟล์ของฉัน
 ├── u/[username]/          # โปรไฟล์สาธารณะของคนอื่น
+├── privacy/               # นโยบายความเป็นส่วนตัว
 ├── prompts/
 │   ├── [id]/              # รายละเอียด prompt + รีวิว
 │   └── new/               # ฟอร์มเพิ่ม/แก้ prompt
 ├── media-types/, ai-models/
 ├── login/, auth/callback/ # OAuth
-├── admin/                 # หลังบ้าน (prompts / users / reviews)
+├── admin/                 # หลังบ้าน (prompts / users / reviews / catalog)
+├── sitemap.ts, robots.ts  # SEO — sitemap แบบ dynamic (ต่อ Prisma), robots.txt
+├── icon.tsx               # favicon ที่ generate จากโค้ด
 └── components/            # component ที่ใช้ร่วมกันทั้งเว็บ
 
 lib/
 ├── supabase/              # client ฝั่ง browser และ server
 ├── profanity.ts           # ตัวกรองคำหยาบ (ลิสต์คำอยู่ที่นี่ที่เดียว)
 ├── promptSearch.ts        # เงื่อนไขค้นหา ใช้ร่วมกันทุกที่
-├── recordCopy.ts          # กติกานับยอดคัดลอก (สมาชิก + ผู้เยี่ยมชม)
+├── recordCopy.ts          # Server Action นับยอดคัดลอก (สมาชิก + ผู้เยี่ยมชม) พร้อม rate limit ต่อ IP
 ├── guestId.ts             # id ประจำเบราว์เซอร์ของผู้เยี่ยมชม ใช้กันนับซ้ำ
 ├── profileCache.ts        # จำโปรไฟล์ไว้กันรูปกระพริบตอนรีเฟรช
 ├── localAvatar.ts         # รูปโปรไฟล์สำรองในเครื่อง
@@ -236,6 +241,14 @@ scripts/
 ### 🔎 การค้นหา
 
 เดิมใช้ full-text search บน `tsvector` ที่ตั้ง config เป็น `simple` ซึ่งต้องพิมพ์ตรงทั้งคำถึงจะเจอ ภาษาไทยที่ไม่มีเว้นวรรคจึงแทบไม่เจออะไรเลย — เปลี่ยนมาใช้ `ilike` ที่จับคำบางส่วนได้ ผ่านตัวช่วยกลาง `lib/promptSearch.ts` ที่ใช้ร่วมกันทั้งผลหน้าแรก การโหลดหน้าถัดไป และรายการแนะนำ ผลลัพธ์จึงตรงกันเสมอ
+
+### 📋 Rate limit การคัดลอก
+
+`recordCopy` เดิมรันฝั่งเบราว์เซอร์ (เรียก Supabase ตรง ๆ จากหน้าเว็บ) จึงไม่มีจุดไหนจำกัดอัตราได้เลย — ย้ายมาเป็น Next.js Server Action เพื่อให้มี "ประตู" เดียวที่ทุก request ต้องผ่านก่อนเขียนลง `prompt_copies`
+
+- จำกัดที่ 20 ครั้ง/นาที ต่อ 1 IP แบบ fixed window เก็บใน memory ของ process
+- ถ้าเกิน limit จะคืน `rateLimited: true` แต่ **ไม่ throw** — ฝั่ง UI ยังโชว์ว่าคัดลอกสำเร็จตามปกติ (คัดลอกลง clipboard ได้จริง) แค่ไม่นับยอดเพิ่ม ไม่อยากให้ผู้ใช้จริงเห็น error จากเรื่องนี้
+- ข้อจำกัดที่รู้อยู่แล้ว: ตัวนับรีเซ็ตทุกครั้งที่ redeploy และถ้า deploy หลาย instance พร้อมกัน แต่ละ instance จะนับแยกกัน (limit จริงจะสูงกว่าที่ตั้งไว้) — เพียงพอสำหรับตอนที่ยังรัน instance เดียว ถ้าต้องแม่นยำข้าม instance ต้องย้ายไปเก็บที่ที่ใช้ร่วมกันได้ เช่น Upstash Redis
 
 ## แนวทางการเขียนโค้ด
 
@@ -320,6 +333,7 @@ What this project takes seriously:
 | 👥 **User management** | Change roles, ban/unban, filter by role and status |
 | 💬 **Review moderation** | Filter by rating and reviewer type, search by text or prompt title |
 | 🚫 **Ban system** | 1–3650 days or permanent, with a reason shown to the user. Temporary bans lift themselves |
+| 🗂️ **Catalog management** | Create/edit/delete categories, media types, AI models, and tags from the web UI (`/admin/catalog`) instead of editing SQL directly |
 
 ## Tech Stack
 
@@ -410,6 +424,7 @@ Run these in order in the Supabase SQL Editor (or via `psql`):
 | `add-profanity-guard.sql` | Database-level profanity filter |
 | `add-ban-enforcement.sql` | Ban system that is actually enforced |
 | `add-guest-copy-count.sql` | Lets signed-out visitors copy prompts and have it counted |
+| `add-admin-catalog-policies.sql` | Grants admins insert/update/delete policies on `categories` / `media_types` / `ai_models` / `tags` (previously editable only via raw SQL) |
 
 > 💡 **Lesson from `fix-prompt-copies-pk.sql`** — the table originally used `(user_id, prompt_id)` as its primary key, which is exactly the shape PostgREST uses to infer a many-to-many relationship. That gave `prompts` and `profiles` two relationship paths, so every query embedding `profiles(...)` failed site-wide with `PGRST201`. Join tables here must always carry their own surrogate primary key and rely on a `unique` constraint for deduplication.
 
@@ -424,19 +439,22 @@ app/
 ├── favorites/             # Saved prompts
 ├── profile/               # My profile
 ├── u/[username]/          # Someone else's public profile
+├── privacy/               # Privacy policy
 ├── prompts/
 │   ├── [id]/              # Prompt detail + reviews
 │   └── new/               # Create / edit form
 ├── media-types/, ai-models/
 ├── login/, auth/callback/ # OAuth
-├── admin/                 # Admin area (prompts / users / reviews)
+├── admin/                 # Admin area (prompts / users / reviews / catalog)
+├── sitemap.ts, robots.ts  # SEO — dynamic sitemap (backed by Prisma), robots.txt
+├── icon.tsx               # Code-generated favicon
 └── components/            # Shared components
 
 lib/
 ├── supabase/              # Browser and server clients
 ├── profanity.ts           # Profanity filter (single source for the word lists)
 ├── promptSearch.ts        # Shared search predicate
-├── recordCopy.ts          # Copy-count rules (members + guests)
+├── recordCopy.ts          # Server Action for copy-count rules (members + guests), with per-IP rate limiting
 ├── guestId.ts             # Per-browser id for signed-out visitors, used for deduplication
 ├── profileCache.ts        # Caches the profile to stop avatar flicker on refresh
 ├── localAvatar.ts         # Local avatar fallback
@@ -492,6 +510,14 @@ What they cannot do: publish prompts, like, or own a profile.
 ### 🔎 Search
 
 Search originally used full-text search over a `tsvector` built with the `simple` config, which requires whole-word matches — nearly useless for Thai, where words are not separated by spaces. It now uses `ilike` for partial matching through the shared helper in `lib/promptSearch.ts`, which backs the first page, infinite scroll, and the suggestion list alike, so all three always agree.
+
+### 📋 Copy rate limiting
+
+`recordCopy` used to run in the browser (calling Supabase directly from the page), which left no single point to rate limit. It's now a Next.js Server Action, giving every request one "gate" it must pass through before writing to `prompt_copies`.
+
+- Capped at 20 requests/minute per IP, using a fixed-window counter kept in process memory
+- Going over the limit returns `rateLimited: true` but **never throws** — the UI still reports a successful copy (the clipboard write itself always succeeds), it just skips incrementing the counter. Real users should never see an error over this
+- Known limitations: the counter resets on every redeploy, and running multiple instances means each one counts independently (so the effective limit is higher than configured). Fine for a single-instance deployment; a shared store like Upstash Redis would be needed for an accurate cross-instance limit
 
 ## Conventions
 
